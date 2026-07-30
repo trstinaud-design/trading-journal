@@ -1,0 +1,57 @@
+"use client";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { LayoutDashboard, Plus, ListChecks, Images, Settings, LogOut } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { cn } from "@/lib/utils/cn";
+import { Button } from "@/components/ui/button";
+
+const links = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/trades/new", label: "Nouveau trade", icon: Plus },
+  { href: "/trades", label: "Mes trades", icon: ListChecks },
+  { href: "/gallery", label: "Galerie", icon: Images },
+  { href: "/setups", label: "Setups & Niveaux", icon: Settings },
+];
+
+export function Sidebar({ email }: { email: string | null }) {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  async function logout() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
+
+  return (
+    <aside className="flex h-screen w-64 flex-col border-r bg-card p-4">
+      <div className="mb-6">
+        <h1 className="text-xl font-bold">Trading Journal</h1>
+        <p className="truncate text-xs text-muted-foreground">{email}</p>
+      </div>
+      <nav className="flex-1 space-y-1">
+        {links.map(({ href, label, icon: Icon }) => {
+          const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
+          return (
+            <Link
+              key={href}
+              href={href}
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                active ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+              )}
+            >
+              <Icon className="h-4 w-4" />
+              {label}
+            </Link>
+          );
+        })}
+      </nav>
+      <Button variant="ghost" className="justify-start" onClick={logout}>
+        <LogOut className="h-4 w-4" /> Déconnexion
+      </Button>
+    </aside>
+  );
+}
