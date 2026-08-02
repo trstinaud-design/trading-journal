@@ -30,8 +30,8 @@ export function Sidebar({ email }: { email: string | null }) {
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-border/60 card-glass p-4">
       <div className="mb-8 flex items-center gap-2.5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-primary glow-primary">
-          <TrendingUp className="h-5 w-5 text-white" />
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-gold glow-gold">
+          <TrendingUp className="h-5 w-5 text-slate-900" />
         </div>
         <div className="min-w-0">
           <h1 className="text-sm font-semibold leading-tight">Trading Journal</h1>

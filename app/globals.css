@@ -27,6 +27,8 @@
     --win: 152 76% 46%;
     --loss: 350 80% 60%;
     --neutral: 240 4% 60%;
+    --gold: 43 90% 55%;
+    --gold-fg: 43 100% 92%;
   }
 
   .dark {
@@ -52,6 +54,8 @@
     --win: 152 76% 50%;
     --loss: 350 90% 65%;
     --neutral: 240 4% 46%;
+    --gold: 43 95% 60%;
+    --gold-fg: 43 100% 95%;
   }
 
   * { @apply border-border; }
@@ -70,6 +74,15 @@
   }
   .gradient-loss {
     background: linear-gradient(135deg, hsl(350, 90%, 65%) 0%, hsl(15, 85%, 60%) 100%);
+  }
+  .gradient-gold {
+    background: linear-gradient(135deg, hsl(45, 95%, 65%) 0%, hsl(30, 90%, 55%) 100%);
+  }
+  .text-gold {
+    color: hsl(var(--gold));
+  }
+  .glow-gold {
+    box-shadow: 0 0 40px -10px hsl(var(--gold) / 0.5);
   }
   .card-glass {
     background: linear-gradient(180deg, hsl(240, 12%, 8%) 0%, hsl(240, 15%, 5%) 100%);

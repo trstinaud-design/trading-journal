@@ -66,8 +66,21 @@ export function SessionPie({ trades }: { trades: Trade[] }) {
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{ background: "hsl(var(--popover))", border: "1px solid hsl(var(--border))", borderRadius: 6, fontSize: 12 }}
-                    formatter={(v: number, _n, p) => [`${v} trade${v > 1 ? "s" : ""}`, SESSION_META[p.payload.session]?.label ?? p.payload.session]}
+                    content={({ active, payload }: any) => {
+                      if (!active || !payload?.length) return null;
+                      const d = payload[0].payload as Slice;
+                      const meta = SESSION_META[d.session];
+                      return (
+                        <div className="rounded-lg border border-border bg-popover p-3 text-xs text-popover-foreground shadow-lg">
+                          <p className="mb-1 font-semibold" style={{ color: meta?.color }}>{meta?.label ?? d.session}</p>
+                          <div className="space-y-0.5">
+                            <p><span className="text-muted-foreground">Trades :</span> <strong>{d.count}</strong></p>
+                            <p><span className="text-emerald-400">Wins {d.wins}</span> · <span className="text-rose-400">Losses {d.losses}</span> · <span className="text-muted-foreground">BE {d.be}</span></p>
+                            <p><span className="text-muted-foreground">Total R :</span> <strong className={d.totalR >= 0 ? "text-emerald-400" : "text-rose-400"}>{d.totalR >= 0 ? "+" : ""}{d.totalR.toFixed(2)}R</strong></p>
+                          </div>
+                        </div>
+                      );
+                    }}
                   />
                 </PieChart>
               </ResponsiveContainer>

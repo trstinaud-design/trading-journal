@@ -45,13 +45,13 @@ export default async function SetupDetailPage({ params }: { params: Promise<{ id
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card className="card-glass">
-          <CardHeader><CardTitle className="text-base text-emerald-400">🏆 Meilleur trade</CardTitle></CardHeader>
+        <Card className="card-glass border-[hsl(var(--gold))]/30 bg-gradient-to-br from-[hsl(var(--gold))]/10 to-transparent">
+          <CardHeader><CardTitle className="text-base text-gold">🏆 Meilleur trade</CardTitle></CardHeader>
           <CardContent>
             {best ? (
               <div className="space-y-1 text-sm">
                 <p className="font-medium">{best.paire} · {best.direction === "long" ? "▲ Long" : "▼ Short"}</p>
-                <p className="text-2xl font-bold text-emerald-400">+{best.resultat_r?.toFixed(2)} R</p>
+                <p className="text-2xl font-bold text-gold">+{best.resultat_r?.toFixed(2)} R</p>
                 <p className="text-xs text-muted-foreground">{format(new Date(best.date_entree), "yyyy-MM-dd HH:mm")}</p>
               </div>
             ) : <p className="text-sm text-muted-foreground">Aucun trade</p>}

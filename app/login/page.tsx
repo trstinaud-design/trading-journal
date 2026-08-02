@@ -42,8 +42,8 @@ export default function LoginPage() {
         <div className="pointer-events-none absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-indigo-500/20 blur-3xl" />
 
         <div className="relative flex items-center gap-2.5">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-primary">
-            <TrendingUp className="h-6 w-6 text-white" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-gold glow-gold">
+            <TrendingUp className="h-6 w-6 text-slate-900" />
           </div>
           <span className="text-lg font-semibold text-white">Trading Journal</span>
         </div>

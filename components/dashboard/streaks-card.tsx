@@ -1,4 +1,4 @@
-import { Flame, Snowflake } from "lucide-react";
+import { Flame, Snowflake, Trophy } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 type Streaks = { bestWin: number; bestLoss: number; currentType: "win" | "loss" | "none"; currentLength: number };
@@ -10,11 +10,11 @@ export function StreaksCard({ streaks }: { streaks: Streaks }) {
   return (
     <Card className="card-glass">
       <CardContent className="grid grid-cols-3 gap-4 p-5">
-        <div>
+        <div className="rounded-lg border border-[hsl(var(--gold))]/30 bg-gradient-to-br from-[hsl(var(--gold))]/10 to-transparent p-3">
           <div className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
-            <Flame className="h-3 w-3 text-emerald-400" /> Meilleure série
+            <Trophy className="h-3 w-3 text-gold" /> Meilleure série
           </div>
-          <p className="mt-2 text-2xl font-bold text-emerald-400 tabular-nums">{streaks.bestWin}</p>
+          <p className="mt-2 text-2xl font-bold text-gold tabular-nums">{streaks.bestWin}</p>
           <p className="text-[11px] text-muted-foreground">gains consécutifs</p>
         </div>
         <div>

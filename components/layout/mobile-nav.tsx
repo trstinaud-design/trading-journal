@@ -43,7 +43,7 @@ export function MobileNav({ email }: { email: string | null }) {
       {/* Top bar mobile */}
       <div className="flex items-center justify-between border-b border-border/60 card-glass px-4 py-3 lg:hidden">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-primary"><TrendingUp className="h-4 w-4 text-white" /></div>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-gold"><TrendingUp className="h-4 w-4 text-slate-900" /></div>
           <span className="text-sm font-semibold">Trading Journal</span>
         </div>
         <button
@@ -63,8 +63,8 @@ export function MobileNav({ email }: { email: string | null }) {
           <aside className="absolute inset-y-0 left-0 flex w-72 flex-col card-glass p-4" onClick={(e) => e.stopPropagation()}>
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-primary glow-primary">
-                  <TrendingUp className="h-5 w-5 text-white" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-gold glow-gold">
+                  <TrendingUp className="h-5 w-5 text-slate-900" />
                 </div>
                 <div className="min-w-0">
                   <h1 className="text-sm font-semibold leading-tight">Trading Journal</h1>
