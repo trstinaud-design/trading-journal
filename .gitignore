@@ -11,3 +11,6 @@ npm-debug.log*
 .vercel
 next-env.d.ts
 tsconfig.tsbuildinfo
+# Données perso (exports mitradacademy contenant screenshots base64)
+scripts/*.json
+scripts/*-export.*

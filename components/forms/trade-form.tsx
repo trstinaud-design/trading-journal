@@ -19,7 +19,7 @@ import { DynamicSelect } from "./dynamic-select";
 import { PartialExitsEditor } from "./partial-exits";
 import { autoLotSize } from "@/lib/utils/pip-value";
 import { sessionFromHour } from "@/lib/utils/session-from-time";
-import type { Compte, Setup, Niveau, ImageKind, PartialExit } from "@/types/database";
+import type { Compte, Setup, Niveau, ImageKind, PartialExit, Trade } from "@/types/database";
 
 const schema = z.object({
   compte_id: z.string().uuid(),
@@ -73,21 +73,44 @@ type Props = {
   comptes: Compte[];
   setups: Setup[];
   niveaux: Niveau[];
+  /** Fournir un trade existant pour passer en mode édition. */
+  initialTrade?: Trade;
 };
 
-export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNiveaux }: Props) {
+export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNiveaux, initialTrade }: Props) {
   const router = useRouter();
   const [setups, setSetups] = useState(initialSetups);
   const [niveaux, setNiveaux] = useState(initialNiveaux);
   const [images, setImages] = useState<Record<ImageKind, File | null>>({ avant: null, pendant: null, apres: null });
   const [submitting, setSubmitting] = useState(false);
 
-  const defaultCompte = comptes[0]?.id ?? "";
-  const defaultCapital = comptes[0]?.capital_initial ?? 10000;
+  const isEditMode = !!initialTrade;
+  const defaultCompte = initialTrade?.compte_id ?? comptes[0]?.id ?? "";
+  const defaultCapital = comptes.find((c) => c.id === defaultCompte)?.capital_initial ?? 10000;
 
   const { register, handleSubmit, watch, setValue, control, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: {
+    defaultValues: initialTrade ? {
+      compte_id: initialTrade.compte_id ?? defaultCompte,
+      date_entree: initialTrade.date_entree.slice(0, 16),
+      paire: initialTrade.paire,
+      direction: initialTrade.direction,
+      session: initialTrade.session,
+      emotion: initialTrade.emotion,
+      prix_entree: initialTrade.prix_entree,
+      stop_loss: initialTrade.stop_loss,
+      take_profit: initialTrade.take_profit,
+      statut: initialTrade.statut,
+      risque_pct: initialTrade.risque_pct,
+      taille_lots: initialTrade.taille_lots,
+      resultat_r: initialTrade.resultat_r,
+      resultat_usd: initialTrade.resultat_usd,
+      setup_id: initialTrade.setup_id,
+      niveau_id: initialTrade.niveau_id,
+      respect_plan: initialTrade.respect_plan,
+      commentaire: initialTrade.commentaire ?? "",
+      partial_exits: initialTrade.partial_exits ?? [],
+    } : {
       compte_id: defaultCompte,
       date_entree: new Date().toISOString().slice(0, 16),
       paire: "XAUUSD",
@@ -154,16 +177,25 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSubmitting(false); return toast.error("Non connecté"); }
 
-    // 1) Insert trade
-    const { data: trade, error } = await supabase
-      .from("trades")
-      .insert({ ...values, user_id: user.id, date_entree: new Date(values.date_entree).toISOString() })
-      .select("id")
-      .single();
+    const payload = { ...values, user_id: user.id, date_entree: new Date(values.date_entree).toISOString() };
+    let trade: { id: string } | null = null;
+    let error: { message: string } | null = null;
+
+    if (isEditMode && initialTrade) {
+      // UPDATE mode
+      const { data, error: e } = await supabase.from("trades").update(payload).eq("id", initialTrade.id).select("id").single();
+      trade = data;
+      error = e;
+    } else {
+      // INSERT mode
+      const { data, error: e } = await supabase.from("trades").insert(payload).select("id").single();
+      trade = data;
+      error = e;
+    }
 
     if (error || !trade) {
       setSubmitting(false);
-      return toast.error(error?.message ?? "Erreur création trade");
+      return toast.error(error?.message ?? "Erreur enregistrement trade");
     }
 
     // 2) Upload images (parallèle)
@@ -384,7 +416,9 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={() => router.back()}>Annuler</Button>
-        <Button type="submit" disabled={submitting}>{submitting ? "Enregistrement..." : "Enregistrer le trade"}</Button>
+        <Button type="submit" disabled={submitting} className="gradient-primary text-white shadow-lg shadow-primary/20 hover:opacity-90">
+          {submitting ? "Enregistrement..." : isEditMode ? "Mettre à jour" : "Enregistrer le trade"}
+        </Button>
       </div>
     </form>
   );
