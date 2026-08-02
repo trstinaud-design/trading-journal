@@ -32,6 +32,12 @@ export type Niveau = {
   created_at: string;
 };
 
+export type PartialExit = {
+  price: number;
+  pct: number;      // pourcentage clôturé (0-100)
+  r_partial: number; // R gagné/perdu sur cette portion
+};
+
 export type Trade = {
   id: string;
   user_id: string;
@@ -53,6 +59,7 @@ export type Trade = {
   niveau_id: string | null;
   respect_plan: boolean;
   commentaire: string | null;
+  partial_exits: PartialExit[];
   created_at: string;
   updated_at: string;
 };

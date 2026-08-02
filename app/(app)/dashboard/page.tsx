@@ -5,7 +5,9 @@ import { EquityCurve } from "@/components/dashboard/equity-curve";
 import { DoWChart } from "@/components/dashboard/dow-chart";
 import { CalendarHeatmap } from "@/components/dashboard/calendar-heatmap";
 import { GroupedPerf } from "@/components/dashboard/grouped-perf";
-import { computeKPIs, equityCurveR, byDayOfWeek, byCalendarDay, groupByKey } from "@/lib/analytics/metrics";
+import { StreaksCard } from "@/components/dashboard/streaks-card";
+import { PeriodChart } from "@/components/dashboard/period-chart";
+import { computeKPIs, equityCurveR, byDayOfWeek, byCalendarDay, groupByKey, computeStreaks, byPeriod } from "@/lib/analytics/metrics";
 import type { Trade, Setup, Niveau } from "@/types/database";
 
 const EMOTION_LABEL: Record<string, string> = {
@@ -33,6 +35,12 @@ export default async function DashboardPage() {
   const equity = equityCurveR(list);
   const dow = byDayOfWeek(list);
   const cal = byCalendarDay(list);
+  const streaks = computeStreaks(list);
+  const periodData = {
+    week: byPeriod(list, "week"),
+    month: byPeriod(list, "month"),
+    quarter: byPeriod(list, "quarter"),
+  };
   const bySetup = groupByKey(list, "setup_id").filter((r) => r.totalTrades > 0);
   const byNiveau = groupByKey(list, "niveau_id").filter((r) => r.totalTrades > 0);
   const bySession = groupByKey(list, "session").filter((r) => r.totalTrades > 0);
@@ -63,12 +71,16 @@ export default async function DashboardPage() {
         <KPICard label="Max Drawdown" value={`${k.maxDrawdownR.toFixed(2)} R`} tone="loss" icon={TrendingDown} />
       </div>
 
+      {/* Streaks */}
+      <StreaksCard streaks={streaks} />
+
       {/* B. Vues temporelles */}
       <div className="grid gap-4 lg:grid-cols-2">
         <EquityCurve data={equity} />
         <CalendarHeatmap data={cal} />
       </div>
 
+      <PeriodChart data={periodData} />
       <DoWChart data={dow} />
 
       {/* C. Analyses comparatives */}

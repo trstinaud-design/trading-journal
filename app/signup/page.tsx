@@ -6,6 +6,7 @@ import { TrendingUp, Zap, Shield, Users } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
@@ -83,7 +84,7 @@ export default function SignupPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Mot de passe (min 8 caractères)</Label>
-              <Input id="password" type="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
+              <PasswordInput id="password" required minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
             <Button type="submit" className="h-11 w-full gradient-primary text-white shadow-lg shadow-primary/20 hover:opacity-90" disabled={loading}>
               {loading ? "Création..." : "Créer mon compte"}

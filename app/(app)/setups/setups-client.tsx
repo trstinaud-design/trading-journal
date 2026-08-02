@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -76,11 +77,18 @@ function List({ table, title, items, onChange }: { table: "setups" | "niveaux"; 
         </div>
         <ul className="divide-y">
           {items.map((it) => (
-            <li key={it.id} className="flex items-center justify-between py-2">
-              <div>
-                <p className="text-sm font-medium">{it.nom}</p>
-                {it.description && <p className="text-xs text-muted-foreground">{it.description}</p>}
-              </div>
+            <li key={it.id} className="flex items-center justify-between gap-2 py-2">
+              {table === "setups" ? (
+                <Link href={`/setups/${it.id}`} className="group flex-1 min-w-0">
+                  <p className="text-sm font-medium group-hover:text-primary">{it.nom} <ChevronRight className="inline h-3 w-3 opacity-0 group-hover:opacity-100" /></p>
+                  {it.description && <p className="truncate text-xs text-muted-foreground">{it.description}</p>}
+                </Link>
+              ) : (
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium">{it.nom}</p>
+                  {it.description && <p className="truncate text-xs text-muted-foreground">{it.description}</p>}
+                </div>
+              )}
               <Button variant="ghost" size="icon" onClick={() => remove(it.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
             </li>
           ))}

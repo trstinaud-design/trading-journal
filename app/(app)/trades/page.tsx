@@ -1,10 +1,9 @@
 import Link from "next/link";
 import { format } from "date-fns";
-import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/cn";
+import { TradesToolbar } from "./trades-toolbar";
 
 const STATUT_COLOR: Record<string, string> = {
   tp: "text-[hsl(var(--win))]",
@@ -28,9 +27,7 @@ export default async function TradesPage() {
           <h1 className="bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-3xl font-bold">Mes trades</h1>
           <p className="mt-1 text-sm text-muted-foreground">{trades?.length ?? 0} trade{(trades?.length ?? 0) > 1 ? "s" : ""} — 200 plus récents</p>
         </div>
-        <Button asChild className="gradient-primary text-white shadow-lg shadow-primary/20 hover:opacity-90">
-          <Link href="/trades/new"><Plus className="h-4 w-4" /> Nouveau trade</Link>
-        </Button>
+        <TradesToolbar />
       </div>
 
       <Card className="overflow-x-auto">

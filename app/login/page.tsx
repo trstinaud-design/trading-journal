@@ -6,6 +6,7 @@ import { TrendingUp, BarChart3, Target, Calendar } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 
@@ -84,7 +85,7 @@ export default function LoginPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Mot de passe</Label>
-              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
+              <PasswordInput id="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
             <Button type="submit" className="h-11 w-full gradient-primary text-white shadow-lg shadow-primary/20 hover:opacity-90" disabled={loading}>
               {loading ? "Connexion..." : "Se connecter"}

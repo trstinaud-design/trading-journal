@@ -16,9 +16,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PositionCalculator } from "./position-calculator";
 import { ImageDropzone } from "./image-dropzone";
 import { DynamicSelect } from "./dynamic-select";
+import { PartialExitsEditor } from "./partial-exits";
 import { autoLotSize } from "@/lib/utils/pip-value";
 import { sessionFromHour } from "@/lib/utils/session-from-time";
-import type { Compte, Setup, Niveau, ImageKind } from "@/types/database";
+import type { Compte, Setup, Niveau, ImageKind, PartialExit } from "@/types/database";
 
 const schema = z.object({
   compte_id: z.string().uuid(),
@@ -41,6 +42,7 @@ const schema = z.object({
   niveau_id: z.string().uuid().nullable(),
   respect_plan: z.boolean(),
   commentaire: z.string().nullable(),
+  partial_exits: z.array(z.object({ price: z.number(), pct: z.number(), r_partial: z.number() })).default([]),
 });
 type FormValues = z.infer<typeof schema>;
 
@@ -104,6 +106,7 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
       niveau_id: null,
       respect_plan: true,
       commentaire: "",
+      partial_exits: [],
     },
   });
 
@@ -313,6 +316,9 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
             </div>
           </CardContent>
         </Card>
+        <Controller name="partial_exits" control={control} render={({ field }) => (
+          <PartialExitsEditor value={field.value ?? []} onChange={field.onChange} />
+        )} />
       </div>
 
       {/* ================================ RANGÉE 3 ================================ */}

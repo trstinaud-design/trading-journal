@@ -117,3 +117,68 @@ export function groupByKey<K extends keyof Trade>(trades: Trade[], key: K) {
   }
   return [...map.entries()].map(([k, ts]) => ({ key: k, ...computeKPIs(ts) }));
 }
+
+/** Séries consécutives de gains/pertes (chronologique). */
+export function computeStreaks(trades: Trade[]) {
+  const chrono = [...trades]
+    .filter((t) => t.resultat_r !== null && t.resultat_r !== 0)
+    .sort((a, b) => a.date_entree.localeCompare(b.date_entree));
+
+  let bestWin = 0, bestLoss = 0;
+  let curWin = 0, curLoss = 0;
+
+  for (const t of chrono) {
+    if ((t.resultat_r ?? 0) > 0) {
+      curWin += 1;
+      curLoss = 0;
+      if (curWin > bestWin) bestWin = curWin;
+    } else {
+      curLoss += 1;
+      curWin = 0;
+      if (curLoss > bestLoss) bestLoss = curLoss;
+    }
+  }
+
+  const last = chrono[chrono.length - 1];
+  const currentType: "win" | "loss" | "none" = !last ? "none" : (last.resultat_r ?? 0) > 0 ? "win" : "loss";
+  const currentLength = currentType === "win" ? curWin : currentType === "loss" ? curLoss : 0;
+
+  return { bestWin, bestLoss, currentType, currentLength };
+}
+
+export type Granularity = "week" | "month" | "quarter";
+
+/** Agrège les trades par période (semaine ISO / mois YYYY-MM / trimestre YYYY-Q). */
+export function byPeriod(trades: Trade[], granularity: Granularity) {
+  const map = new Map<string, Trade[]>();
+  for (const t of trades) {
+    const d = new Date(t.date_entree);
+    let key: string;
+    if (granularity === "month") {
+      key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    } else if (granularity === "quarter") {
+      key = `${d.getFullYear()}-Q${Math.floor(d.getMonth() / 3) + 1}`;
+    } else {
+      // Semaine ISO
+      const tmp = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      const dayNum = tmp.getUTCDay() || 7;
+      tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
+      const week = Math.ceil(((tmp.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+      key = `${tmp.getUTCFullYear()}-S${String(week).padStart(2, "0")}`;
+    }
+    (map.get(key) ?? map.set(key, []).get(key)!).push(t);
+  }
+  return [...map.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([label, ts]) => {
+      const kpis = computeKPIs(ts);
+      return {
+        label,
+        netR: Number(kpis.totalR.toFixed(2)),
+        netUsd: Number(kpis.totalUsd.toFixed(2)),
+        winRate: Math.round(kpis.winRate * 100),
+        n: ts.length,
+      };
+    });
+}

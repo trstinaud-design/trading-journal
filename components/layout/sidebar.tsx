@@ -5,6 +5,7 @@ import { LayoutDashboard, Plus, ListChecks, Images, Settings, LogOut, TrendingUp
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "./theme-toggle";
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -64,9 +65,12 @@ export function Sidebar({ email }: { email: string | null }) {
       </nav>
 
       <div className="border-t border-border/60 pt-3">
-        <Button variant="ghost" className="w-full justify-start text-muted-foreground hover:text-destructive" onClick={logout}>
-          <LogOut className="h-4 w-4" /> Déconnexion
-        </Button>
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" className="flex-1 justify-start text-muted-foreground hover:text-destructive" onClick={logout}>
+            <LogOut className="h-4 w-4" /> Déconnexion
+          </Button>
+          <ThemeToggle />
+        </div>
       </div>
     </aside>
   );
