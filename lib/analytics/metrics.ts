@@ -75,21 +75,21 @@ export function equityCurveR(trades: Trade[]) {
   });
 }
 
-/** Groupe par jour de semaine (0=Dim ... 6=Sam) → { jour, netR, winRate, n } */
-const DAYS_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
+/** Groupe par jour de semaine — Lundi à Vendredi uniquement (marchés fermés le weekend). */
+const WEEKDAYS_FR = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi"];
 export function byDayOfWeek(trades: Trade[]) {
-  const buckets: Record<number, Trade[]> = { 0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [] };
+  const buckets: Record<number, Trade[]> = { 1: [], 2: [], 3: [], 4: [], 5: [] };
   for (const t of trades) {
     const d = new Date(t.date_entree).getDay();
-    buckets[d].push(t);
+    if (d >= 1 && d <= 5) buckets[d].push(t);
   }
-  return Object.entries(buckets).map(([dayIdx, ts]) => {
-    const kpis = computeKPIs(ts);
+  return WEEKDAYS_FR.map((label, i) => {
+    const kpis = computeKPIs(buckets[i + 1]);
     return {
-      jour: DAYS_FR[Number(dayIdx)],
+      jour: label,
       netR: Number(kpis.totalR.toFixed(2)),
       winRate: Math.round(kpis.winRate * 100),
-      n: ts.length,
+      n: buckets[i + 1].length,
     };
   });
 }

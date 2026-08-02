@@ -1,3 +1,4 @@
+import { Target, Zap, DollarSign, Brain, TrendingDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { KPICard } from "@/components/dashboard/kpi-card";
 import { EquityCurve } from "@/components/dashboard/equity-curve";
@@ -46,18 +47,20 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">{list.length} trade(s) enregistré(s)</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-3xl font-bold">Dashboard</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{list.length} trade{list.length > 1 ? "s" : ""} enregistré{list.length > 1 ? "s" : ""}</p>
+        </div>
       </div>
 
       {/* A. KPIs Globaux */}
       <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
-        <KPICard label="Win Rate" value={`${Math.round(k.winRate * 100)}%`} hint={`${k.wins}W / ${k.losses}L / ${k.breakEven}BE`} tone={k.winRate >= 0.5 ? "win" : "loss"} />
-        <KPICard label="Profit Factor" value={pf} tone={k.profitFactor >= 1.5 ? "win" : k.profitFactor >= 1 ? "default" : "loss"} />
-        <KPICard label="Total Net" value={`${k.totalR >= 0 ? "+" : ""}${k.totalR.toFixed(2)} R`} hint={`${k.totalUsd >= 0 ? "+" : ""}${k.totalUsd.toFixed(2)} $`} tone={k.totalR >= 0 ? "win" : "loss"} />
-        <KPICard label="Espérance" value={`${k.expectancyR >= 0 ? "+" : ""}${k.expectancyR.toFixed(2)} R`} hint={`Avg W ${k.avgWinR.toFixed(2)} / Avg L ${k.avgLossR.toFixed(2)}`} tone={k.expectancyR >= 0 ? "win" : "loss"} />
-        <KPICard label="Max Drawdown" value={`${k.maxDrawdownR.toFixed(2)} R`} tone="loss" />
+        <KPICard label="Win Rate" value={`${Math.round(k.winRate * 100)}%`} hint={`${k.wins}W / ${k.losses}L / ${k.breakEven}BE`} tone={k.winRate >= 0.5 ? "win" : "loss"} icon={Target} trend={k.winRate >= 0.5 ? "up" : "down"} />
+        <KPICard label="Profit Factor" value={pf} tone={k.profitFactor >= 1.5 ? "win" : k.profitFactor >= 1 ? "default" : "loss"} icon={Zap} trend={k.profitFactor >= 1 ? "up" : "down"} />
+        <KPICard label="Total Net" value={`${k.totalR >= 0 ? "+" : ""}${k.totalR.toFixed(2)} R`} hint={`${k.totalUsd >= 0 ? "+" : ""}${k.totalUsd.toFixed(2)} $`} tone={k.totalR >= 0 ? "win" : "loss"} icon={DollarSign} trend={k.totalR >= 0 ? "up" : "down"} />
+        <KPICard label="Espérance" value={`${k.expectancyR >= 0 ? "+" : ""}${k.expectancyR.toFixed(2)} R`} hint={`Avg W ${k.avgWinR.toFixed(2)} / Avg L ${k.avgLossR.toFixed(2)}`} tone={k.expectancyR >= 0 ? "win" : "loss"} icon={Brain} trend={k.expectancyR >= 0 ? "up" : "down"} />
+        <KPICard label="Max Drawdown" value={`${k.maxDrawdownR.toFixed(2)} R`} tone="loss" icon={TrendingDown} />
       </div>
 
       {/* B. Vues temporelles */}
@@ -78,15 +81,21 @@ export default async function DashboardPage() {
 
       {/* Impact respect du plan */}
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="rounded-xl border bg-card p-4">
-          <p className="text-xs uppercase text-muted-foreground">Respect du plan (✓)</p>
-          <p className="text-3xl font-bold text-[hsl(var(--win))]">{kRespect.totalR >= 0 ? "+" : ""}{kRespect.totalR.toFixed(2)} R</p>
-          <p className="text-xs text-muted-foreground">{kRespect.totalTrades} trades • WR {Math.round(kRespect.winRate * 100)}% • PF {kRespect.profitFactor === Infinity ? "∞" : kRespect.profitFactor.toFixed(2)}</p>
+        <div className="card-glass rounded-xl border border-emerald-500/20 p-5">
+          <div className="flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-500/15 text-xs font-bold text-emerald-400">✓</span>
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Respect du plan</p>
+          </div>
+          <p className="mt-3 text-3xl font-bold tabular-nums text-emerald-400">{kRespect.totalR >= 0 ? "+" : ""}{kRespect.totalR.toFixed(2)} R</p>
+          <p className="mt-1 text-xs text-muted-foreground">{kRespect.totalTrades} trades • WR {Math.round(kRespect.winRate * 100)}% • PF {kRespect.profitFactor === Infinity ? "∞" : kRespect.profitFactor.toFixed(2)}</p>
         </div>
-        <div className="rounded-xl border bg-card p-4">
-          <p className="text-xs uppercase text-muted-foreground">Hors plan (✗)</p>
-          <p className="text-3xl font-bold text-[hsl(var(--loss))]">{kHorsPlan.totalR >= 0 ? "+" : ""}{kHorsPlan.totalR.toFixed(2)} R</p>
-          <p className="text-xs text-muted-foreground">{kHorsPlan.totalTrades} trades • WR {Math.round(kHorsPlan.winRate * 100)}% • PF {kHorsPlan.profitFactor === Infinity ? "∞" : kHorsPlan.profitFactor.toFixed(2)}</p>
+        <div className="card-glass rounded-xl border border-rose-500/20 p-5">
+          <div className="flex items-center gap-2">
+            <span className="flex h-6 w-6 items-center justify-center rounded-md bg-rose-500/15 text-xs font-bold text-rose-400">✗</span>
+            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Hors plan</p>
+          </div>
+          <p className="mt-3 text-3xl font-bold tabular-nums text-rose-400">{kHorsPlan.totalR >= 0 ? "+" : ""}{kHorsPlan.totalR.toFixed(2)} R</p>
+          <p className="mt-1 text-xs text-muted-foreground">{kHorsPlan.totalTrades} trades • WR {Math.round(kHorsPlan.winRate * 100)}% • PF {kHorsPlan.profitFactor === Infinity ? "∞" : kHorsPlan.profitFactor.toFixed(2)}</p>
         </div>
       </div>
     </div>

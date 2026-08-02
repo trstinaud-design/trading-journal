@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils/cn";
 
 type Day = { date: string; netR: number; netUsd: number; n: number };
 
+/** Heatmap Lundi-Vendredi uniquement (le trading ne se fait pas le weekend). */
 export function CalendarHeatmap({ data }: { data: Day[] }) {
   const [cursor, setCursor] = useState(startOfMonth(new Date()));
   const map = new Map(data.map((d) => [d.date, d]));
@@ -22,11 +23,13 @@ export function CalendarHeatmap({ data }: { data: Day[] }) {
     cur = addDays(cur, 1);
     if (cells.length > 42) break;
   }
+  // Ne garde que les jours ouvrés (lundi=1 → vendredi=5)
+  const weekdayCells = cells.filter((d) => d.getDay() >= 1 && d.getDay() <= 5);
 
   function bgFor(day: Day | undefined) {
     if (!day || day.n === 0) return "bg-muted/30 text-muted-foreground";
-    if (day.netUsd > 0) return "bg-[hsl(var(--win))]/20 text-[hsl(var(--win))] font-semibold";
-    if (day.netUsd < 0) return "bg-[hsl(var(--loss))]/20 text-[hsl(var(--loss))] font-semibold";
+    if (day.netUsd > 0) return "bg-emerald-500/25 text-emerald-300 font-semibold ring-1 ring-emerald-500/40";
+    if (day.netUsd < 0) return "bg-rose-500/25 text-rose-300 font-semibold ring-1 ring-rose-500/40";
     return "bg-muted text-muted-foreground";
   }
 
@@ -40,9 +43,9 @@ export function CalendarHeatmap({ data }: { data: Day[] }) {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
-          {["L", "M", "M", "J", "V", "S", "D"].map((d, i) => <div key={i} className="pb-1">{d}</div>)}
-          {cells.map((d) => {
+        <div className="grid grid-cols-5 gap-1.5 text-center text-xs text-muted-foreground">
+          {["Lun", "Mar", "Mer", "Jeu", "Ven"].map((d) => <div key={d} className="pb-1 font-medium">{d}</div>)}
+          {weekdayCells.map((d) => {
             const key = format(d, "yyyy-MM-dd");
             const day = map.get(key);
             const inMonth = d.getMonth() === cursor.getMonth();
@@ -50,14 +53,14 @@ export function CalendarHeatmap({ data }: { data: Day[] }) {
               <div
                 key={key}
                 className={cn(
-                  "flex aspect-square flex-col items-center justify-center rounded-md text-xs",
+                  "flex aspect-square flex-col items-center justify-center rounded-lg text-xs transition-transform hover:scale-105",
                   inMonth ? bgFor(day) : "opacity-30",
-                  isSameDay(d, new Date()) && "ring-1 ring-primary",
+                  isSameDay(d, new Date()) && "ring-2 ring-primary",
                 )}
               >
-                <span>{format(d, "d")}</span>
+                <span className="text-sm">{format(d, "d")}</span>
                 {day && day.n > 0 && (
-                  <span className="text-[9px]">{day.netUsd > 0 ? "+" : ""}{day.netUsd.toFixed(0)}$</span>
+                  <span className="text-[10px]">{day.netUsd > 0 ? "+" : ""}{day.netUsd.toFixed(0)}$</span>
                 )}
               </div>
             );

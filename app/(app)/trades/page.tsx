@@ -25,10 +25,12 @@ export default async function TradesPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Mes trades</h1>
-          <p className="text-sm text-muted-foreground">{trades?.length ?? 0} trade(s) — 200 plus récents</p>
+          <h1 className="bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-3xl font-bold">Mes trades</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{trades?.length ?? 0} trade{(trades?.length ?? 0) > 1 ? "s" : ""} — 200 plus récents</p>
         </div>
-        <Button asChild><Link href="/trades/new"><Plus className="h-4 w-4" /> Nouveau trade</Link></Button>
+        <Button asChild className="gradient-primary text-white shadow-lg shadow-primary/20 hover:opacity-90">
+          <Link href="/trades/new"><Plus className="h-4 w-4" /> Nouveau trade</Link>
+        </Button>
       </div>
 
       <Card className="overflow-x-auto">

@@ -10,10 +10,12 @@ export default async function NewTradePage() {
   ]);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold">Nouveau trade</h1>
-        <p className="text-sm text-muted-foreground">Contexte → Exécution → Technique & visuels</p>
+    <div className="mx-auto max-w-6xl space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-3xl font-bold">Nouveau trade</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Contexte → Exécution → Technique &amp; visuels</p>
+        </div>
       </div>
       <TradeForm comptes={comptes ?? []} setups={setups ?? []} niveaux={niveaux ?? []} />
     </div>
