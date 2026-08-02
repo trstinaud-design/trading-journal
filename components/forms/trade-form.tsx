@@ -68,6 +68,29 @@ const STATUTS = [
 ] as const;
 const PAIRES_QUICK = ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "GBPJPY", "US30", "NAS100"];
 
+/** Libellés lisibles pour l'affichage des erreurs. */
+const FIELD_LABELS: Record<string, string> = {
+  compte_id: "Compte",
+  date_entree: "Date & heure",
+  paire: "Paire / Actif",
+  direction: "Direction",
+  session: "Session",
+  emotion: "État mental",
+  prix_entree: "Prix d'entrée",
+  stop_loss: "Stop Loss",
+  take_profit: "Take Profit",
+  statut: "Statut",
+  risque_pct: "Risque (%)",
+  taille_lots: "Taille (lots)",
+  resultat_r: "Résultat (R)",
+  resultat_usd: "Résultat ($)",
+  setup_id: "Setup",
+  niveau_id: "Niveau",
+  respect_plan: "Respect du plan",
+  commentaire: "Commentaire",
+  partial_exits: "Sorties partielles",
+};
+
 type Props = {
   comptes: Compte[];
   setups: Setup[];
@@ -131,6 +154,10 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
       partial_exits: [],
     },
   });
+
+  /** Bordure rouge + halo si le champ a une erreur zod. */
+  const errCls = (name: keyof FormValues) =>
+    errors[name] ? "border-destructive ring-1 ring-destructive/40 focus-visible:ring-destructive" : "";
 
   const paire = watch("paire");
   const statut = watch("statut");
@@ -216,8 +243,16 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
     router.refresh();
   }
 
+  // Scroll vers l'encart d'erreurs quand la validation zod échoue
+  const onInvalid = () => {
+    setTimeout(() => {
+      document.getElementById("form-errors")?.scrollIntoView({ behavior: "smooth", block: "center" });
+      toast.error("Corrige les champs en rouge avant d'enregistrer");
+    }, 50);
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit, onInvalid)} className="space-y-6">
       {/* ================================ RANGÉE 1 ================================ */}
       <Card>
         <CardHeader><CardTitle className="text-base">1 · Contexte & Psychologie</CardTitle></CardHeader>
@@ -226,7 +261,7 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
             <Label>Compte</Label>
             <Controller name="compte_id" control={control} render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className={errCls("compte_id")}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {comptes.map((c) => <SelectItem key={c.id} value={c.id}>{c.nom} ({c.type})</SelectItem>)}
                 </SelectContent>
@@ -235,12 +270,12 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
           </div>
           <div className="space-y-1">
             <Label>Date & heure</Label>
-            <Input type="datetime-local" {...register("date_entree")} />
+            <Input type="datetime-local" className={errCls("date_entree")} {...register("date_entree")} />
           </div>
           <div className="space-y-1">
             <Label>Paire / Actif</Label>
             <div className="flex gap-1">
-              <Input {...register("paire")} className="uppercase" />
+              <Input {...register("paire")} className={`uppercase ${errCls("paire")}`} />
             </div>
             <div className="flex flex-wrap gap-1">
               {PAIRES_QUICK.map((p) => (
@@ -257,7 +292,7 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
             <Label>Direction</Label>
             <Controller name="direction" control={control} render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className={errCls("direction")}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="long">Long (Achat)</SelectItem>
                   <SelectItem value="short">Short (Vente)</SelectItem>
@@ -269,7 +304,7 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
             <Label>Session <span className="text-[10px] text-muted-foreground">(auto)</span></Label>
             <Controller name="session" control={control} render={({ field }) => (
               <Select value={field.value ?? undefined} onValueChange={field.onChange}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className={errCls("session")}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {SESSIONS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
                 </SelectContent>
@@ -280,7 +315,7 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
             <Label>État mental</Label>
             <Controller name="emotion" control={control} render={({ field }) => (
               <Select value={field.value ?? undefined} onValueChange={field.onChange}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className={errCls("emotion")}><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {EMOTIONS.map((e) => <SelectItem key={e.value} value={e.value}>{e.label}</SelectItem>)}
                 </SelectContent>
@@ -302,21 +337,21 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
           <CardContent className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
             <div className="space-y-1">
               <Label>Prix d&apos;entrée</Label>
-              <Input type="number" step="any" {...register("prix_entree", { setValueAs: (v) => v === "" ? null : Number(v) })} />
+              <Input type="number" step="any" className={errCls("prix_entree")} {...register("prix_entree", { setValueAs: (v) => v === "" ? null : Number(v) })} />
             </div>
             <div className="space-y-1">
               <Label>Stop Loss</Label>
-              <Input type="number" step="any" {...register("stop_loss", { setValueAs: (v) => v === "" ? null : Number(v) })} />
+              <Input type="number" step="any" className={errCls("stop_loss")} {...register("stop_loss", { setValueAs: (v) => v === "" ? null : Number(v) })} />
             </div>
             <div className="space-y-1">
               <Label>Take Profit</Label>
-              <Input type="number" step="any" {...register("take_profit", { setValueAs: (v) => v === "" ? null : Number(v) })} />
+              <Input type="number" step="any" className={errCls("take_profit")} {...register("take_profit", { setValueAs: (v) => v === "" ? null : Number(v) })} />
             </div>
             <div className="space-y-1">
               <Label>Statut</Label>
               <Controller name="statut" control={control} render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger className={errCls("statut")}><SelectValue /></SelectTrigger>
                   <SelectContent>
                     {STATUTS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
                   </SelectContent>
@@ -325,24 +360,25 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
             </div>
             <div className="space-y-1">
               <Label>Risque (%)</Label>
-              <Input type="number" step="any" {...register("risque_pct", { setValueAs: (v) => v === "" ? null : Number(v) })} />
+              <Input type="number" step="any" className={errCls("risque_pct")} {...register("risque_pct", { setValueAs: (v) => v === "" ? null : Number(v) })} />
             </div>
             <div className="space-y-1">
               <Label>Taille (lots) <span className="text-[10px] text-muted-foreground">(auto)</span></Label>
-              <Input type="number" step="0.01" {...register("taille_lots", { setValueAs: (v) => v === "" ? null : Number(v) })} />
+              <Input type="number" step="0.01" className={errCls("taille_lots")} {...register("taille_lots", { setValueAs: (v) => v === "" ? null : Number(v) })} />
             </div>
             <div className="space-y-1">
               <Label>Résultat (R)</Label>
               <Input
                 type="number"
                 step="0.01"
+                className={errCls("resultat_r")}
                 placeholder={statut === "tp" ? "auto ex: 2" : statut === "sl" ? "-1" : "0"}
                 {...register("resultat_r", { setValueAs: (v) => v === "" ? null : Number(v) })}
               />
             </div>
             <div className="space-y-1">
               <Label>Résultat ($) — auto</Label>
-              <Input type="number" step="0.01" className="bg-muted"
+              <Input type="number" step="0.01" className={`bg-muted ${errCls("resultat_usd")}`}
                 {...register("resultat_usd", { setValueAs: (v) => v === "" ? null : Number(v) })} />
             </div>
           </CardContent>
@@ -404,13 +440,22 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
 
           <div className="space-y-1">
             <Label>Commentaires & auto-analyse</Label>
-            <Textarea rows={4} {...register("commentaire")} placeholder="Ce que j'ai bien fait, ce que je dois améliorer..." />
+            <Textarea rows={4} className={errCls("commentaire")} {...register("commentaire")} placeholder="Ce que j'ai bien fait, ce que je dois améliorer..." />
           </div>
         </CardContent>
       </Card>
 
       {Object.keys(errors).length > 0 && (
-        <p className="text-sm text-destructive">Certains champs sont invalides.</p>
+        <div id="form-errors" className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm">
+          <p className="mb-1 font-semibold text-destructive">⚠ Corrige les champs suivants :</p>
+          <ul className="ml-4 list-disc space-y-0.5 text-destructive/90">
+            {Object.entries(errors).map(([field, err]) => (
+              <li key={field}>
+                <strong>{FIELD_LABELS[field] ?? field}</strong> : {(err as { message?: string })?.message ?? "invalide"}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       <div className="flex justify-end gap-2">
