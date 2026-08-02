@@ -50,7 +50,6 @@ const SESSIONS = [
   { value: "asie", label: "Asie" },
   { value: "londres", label: "Londres" },
   { value: "ny", label: "New York" },
-  { value: "chevauchement_ldn_ny", label: "Chevauchement LDN/NY" },
   { value: "hors_timing", label: "Hors timing" },
 ] as const;
 const EMOTIONS = [

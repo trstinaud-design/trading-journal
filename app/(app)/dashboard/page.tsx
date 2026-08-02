@@ -5,6 +5,8 @@ import { EquityCurve } from "@/components/dashboard/equity-curve";
 import { DoWChart } from "@/components/dashboard/dow-chart";
 import { CalendarHeatmap } from "@/components/dashboard/calendar-heatmap";
 import { GroupedPerf } from "@/components/dashboard/grouped-perf";
+import { PerfTable } from "@/components/dashboard/perf-table";
+import { SessionPie } from "@/components/dashboard/session-pie";
 import { StreaksCard } from "@/components/dashboard/streaks-card";
 import { PeriodChart } from "@/components/dashboard/period-chart";
 import { computeKPIs, equityCurveR, byDayOfWeek, byCalendarDay, groupByKey, computeStreaks, byPeriod } from "@/lib/analytics/metrics";
@@ -12,11 +14,7 @@ import type { Trade, Setup, Niveau } from "@/types/database";
 
 const EMOTION_LABEL: Record<string, string> = {
   calme: "Calme", confiant: "Confiant", impatient: "Impatient",
-  fomo: "FOMO", revenge: "Revenge", stresse: "Stressé", "—": "Non renseigné",
-};
-const SESSION_LABEL: Record<string, string> = {
-  asie: "Asie", londres: "Londres", ny: "New York",
-  chevauchement_ldn_ny: "Chevauchement LDN/NY", hors_timing: "Hors timing", "—": "Non renseigné",
+  fomo: "FOMO", revenge: "Revenge", stresse: "Stressé", surexcite: "Surexcité", "—": "Non renseigné",
 };
 
 export default async function DashboardPage() {
@@ -43,7 +41,6 @@ export default async function DashboardPage() {
   };
   const bySetup = groupByKey(list, "setup_id").filter((r) => r.totalTrades > 0);
   const byNiveau = groupByKey(list, "niveau_id").filter((r) => r.totalTrades > 0);
-  const bySession = groupByKey(list, "session").filter((r) => r.totalTrades > 0);
   const byEmotion = groupByKey(list, "emotion").filter((r) => r.totalTrades > 0);
 
   const respect = list.filter((t) => t.respect_plan);
@@ -74,20 +71,27 @@ export default async function DashboardPage() {
       {/* Streaks */}
       <StreaksCard streaks={streaks} />
 
-      {/* B. Vues temporelles */}
+      {/* Vues temporelles */}
       <div className="grid gap-4 lg:grid-cols-2">
         <EquityCurve data={equity} />
         <CalendarHeatmap data={cal} />
       </div>
 
-      <PeriodChart data={periodData} />
-      <DoWChart data={dow} />
-
-      {/* C. Analyses comparatives */}
+      {/* Perf périodes + jours (côte-à-côte) */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <GroupedPerf title="Performance par Setup" rows={bySetup} labels={setupLabels} />
-        <GroupedPerf title="Performance par Niveau" rows={byNiveau} labels={niveauLabels} />
-        <GroupedPerf title="Performance par Session" rows={bySession} labels={SESSION_LABEL} />
+        <PeriodChart data={periodData} />
+        <DoWChart data={dow} />
+      </div>
+
+      {/* Perf Setup + Niveau (tables côte-à-côte, style mitrad) */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <PerfTable title="Performance par Setup" rows={bySetup} labels={setupLabels} columnLabel="Setup" />
+        <PerfTable title="Performance par Niveau" rows={byNiveau} labels={niveauLabels} columnLabel="Niveau" />
+      </div>
+
+      {/* Session (pie) + Émotion (bars) côte-à-côte */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <SessionPie trades={list} />
         <GroupedPerf title="Émotion vs Performance" rows={byEmotion} labels={EMOTION_LABEL} />
       </div>
 

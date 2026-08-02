@@ -121,63 +121,59 @@ export function TradesView({
         <TradesToolbar />
       </div>
 
-      {/* ═════════════ ONGLETS ═════════════ */}
-      <div className="flex flex-wrap gap-1 rounded-lg bg-muted p-1">
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            type="button"
-            onClick={() => setTab(t.key)}
-            className={cn(
-              "flex items-center gap-2 rounded-md px-4 py-1.5 text-sm font-medium transition-colors",
-              tab === t.key
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {t.label}
-            <span className={cn(
-              "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
-              tab === t.key ? "bg-primary/15 text-primary" : "bg-muted-foreground/10 text-muted-foreground",
-            )}>{tabCounts[t.key]}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* ═════════════ CHIPS FILTRES ═════════════ */}
-      <Card className="card-glass p-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <ChipSelect label="Paire" value={pair} onChange={setPair} options={[["all", "Toutes"], ...distinctPairs.map((p) => [p, p] as [string, string])]} />
-          <ChipSelect label="Session" value={session} onChange={setSession} options={[["all", "Toutes"], ...distinctSessions.map((s) => [s, sessionLabel(s)] as [string, string])]} />
-          <ChipSelect label="Direction" value={direction} onChange={setDirection} options={[["all", "Toutes"], ["long", "▲ Long"], ["short", "▼ Short"]]} />
-          <ChipSelect label="Setup" value={setupId} onChange={setSetupId} options={[["all", "Tous"], ...setups.map((s) => [s.id, s.nom] as [string, string])]} />
-          <ChipSelect label="Émotion" value={emotion} onChange={setEmotion} options={[["all", "Toutes"], ...distinctEmotions.map((e) => [e, emotionLabel(e)] as [string, string])]} />
-          <ChipSelect label="Statut" value={statut} onChange={setStatut} options={[["all", "Tous"], ["tp", "WIN"], ["sl", "LOSS"], ["be", "BE"], ["manuel", "MANUEL"]]} />
-
-          <div className="flex items-center gap-1">
-            <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-8 w-36 text-xs" placeholder="jj/mm/aaaa" />
-            <span className="text-xs text-muted-foreground">→</span>
-            <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-8 w-36 text-xs" />
-          </div>
-
-          <div className="ml-auto flex items-center gap-2">
-            <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
-              <SelectTrigger className="h-8 w-40 text-xs"><ArrowUpDown className="mr-1 h-3 w-3" /><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="date_desc">Date ↓ (récent)</SelectItem>
-                <SelectItem value="date_asc">Date ↑ (ancien)</SelectItem>
-                <SelectItem value="r_desc">R ↓ (meilleur)</SelectItem>
-                <SelectItem value="r_asc">R ↑ (pire)</SelectItem>
-              </SelectContent>
-            </Select>
-            {activeFilters > 0 && (
-              <Button variant="ghost" size="sm" onClick={resetFilters} className="text-xs">
-                <X className="h-3 w-3" /> Reset ({activeFilters})
-              </Button>
-            )}
-          </div>
+      {/* ═════════════ BARRE : ONGLETS + FILTRES (une seule ligne) ═════════════ */}
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Onglets à gauche */}
+        <div className="flex gap-1 rounded-lg bg-muted p-1">
+          {TABS.map((t) => (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setTab(t.key)}
+              className={cn(
+                "flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition-colors",
+                tab === t.key ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {t.label}
+              <span className={cn(
+                "rounded-full px-1.5 py-0.5 text-[9px] font-bold",
+                tab === t.key ? "bg-primary/15 text-primary" : "bg-muted-foreground/10 text-muted-foreground",
+              )}>{tabCounts[t.key]}</span>
+            </button>
+          ))}
         </div>
-      </Card>
+
+        {/* Chips filtres à droite des onglets, wrap automatique */}
+        <ChipSelect label="Paire" value={pair} onChange={setPair} options={[["all", "Toutes"], ...distinctPairs.map((p) => [p, p] as [string, string])]} />
+        <ChipSelect label="Session" value={session} onChange={setSession} options={[["all", "Toutes"], ...distinctSessions.map((s) => [s, sessionLabel(s)] as [string, string])]} />
+        <ChipSelect label="Dir." value={direction} onChange={setDirection} options={[["all", "Toutes"], ["long", "▲ Long"], ["short", "▼ Short"]]} />
+        <ChipSelect label="Setup" value={setupId} onChange={setSetupId} options={[["all", "Tous"], ...setups.map((s) => [s.id, s.nom] as [string, string])]} />
+        <ChipSelect label="Émotion" value={emotion} onChange={setEmotion} options={[["all", "Toutes"], ...distinctEmotions.map((e) => [e, emotionLabel(e)] as [string, string])]} />
+        <ChipSelect label="Statut" value={statut} onChange={setStatut} options={[["all", "Tous"], ["tp", "WIN"], ["sl", "LOSS"], ["be", "BE"], ["manuel", "MANUEL"]]} />
+
+        <div className="flex items-center gap-1">
+          <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-8 w-32 text-xs" />
+          <span className="text-xs text-muted-foreground">→</span>
+          <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className="h-8 w-32 text-xs" />
+        </div>
+
+        <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+          <SelectTrigger className="h-8 w-auto min-w-[9rem] text-xs"><ArrowUpDown className="mr-1 h-3 w-3" /><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="date_desc">Date ↓ (récent)</SelectItem>
+            <SelectItem value="date_asc">Date ↑ (ancien)</SelectItem>
+            <SelectItem value="r_desc">R ↓ (meilleur)</SelectItem>
+            <SelectItem value="r_asc">R ↑ (pire)</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {activeFilters > 0 && (
+          <Button variant="ghost" size="sm" onClick={resetFilters} className="h-8 text-xs">
+            <X className="h-3 w-3" /> Reset ({activeFilters})
+          </Button>
+        )}
+      </div>
 
       {/* ═════════════ TABLEAU ═════════════ */}
       <Card className="card-glass overflow-x-auto">
@@ -253,8 +249,8 @@ function ChipSelect({
   const isActive = value !== "all";
   return (
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className={cn("h-8 min-w-[8rem] text-xs", isActive && "border-primary bg-primary/5 text-primary")}>
-        <span className="mr-1 text-[10px] uppercase opacity-70">{label}</span>
+      <SelectTrigger className={cn("h-8 w-auto min-w-[6.5rem] max-w-[10rem] gap-1 text-xs", isActive && "border-primary bg-primary/5 text-primary")}>
+        <span className="text-[10px] uppercase opacity-70">{label}</span>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
