@@ -325,7 +325,7 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
             </div>
             <div className="space-y-1">
               <Label>Risque (%)</Label>
-              <Input type="number" step="0.1" {...register("risque_pct", { setValueAs: (v) => v === "" ? null : Number(v) })} />
+              <Input type="number" step="any" {...register("risque_pct", { setValueAs: (v) => v === "" ? null : Number(v) })} />
             </div>
             <div className="space-y-1">
               <Label>Taille (lots) <span className="text-[10px] text-muted-foreground">(auto)</span></Label>

@@ -39,11 +39,11 @@ export function PositionCalculator({ paire, onLotSize, defaultCapital = 10000 }:
         </div>
         <div className="space-y-1">
           <Label>Risque (%)</Label>
-          <Input type="number" step="0.1" min={0} value={riskPct} onChange={(e) => setRiskPct(Number(e.target.value))} />
+          <Input type="number" step="any" min={0} value={riskPct} onChange={(e) => setRiskPct(Number(e.target.value))} />
         </div>
         <div className="space-y-1">
           <Label>SL (pips/points)</Label>
-          <Input type="number" step="0.1" min={0} value={slPips} onChange={(e) => setSlPips(Number(e.target.value))} />
+          <Input type="number" step="any" min={0} value={slPips} onChange={(e) => setSlPips(Number(e.target.value))} />
         </div>
         <div className="space-y-1">
           <Label>Risque $</Label>

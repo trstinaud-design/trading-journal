@@ -158,7 +158,7 @@ function ComptesList({ items, onChange }: { items: Compte[]; onChange: () => voi
             </div>
             <div className="space-y-1">
               <Label className="text-xs">Risque défaut (%)</Label>
-              <Input type="number" step="0.1" value={risk} onChange={(e) => setRisk(Number(e.target.value))} />
+              <Input type="number" step="any" value={risk} onChange={(e) => setRisk(Number(e.target.value))} />
             </div>
           </div>
           <Button onClick={add} className="w-full"><Plus className="h-4 w-4" /> Ajouter</Button>
@@ -174,7 +174,7 @@ function ComptesList({ items, onChange }: { items: Compte[]; onChange: () => voi
                 <Label className="text-xs">Risque</Label>
                 <Input
                   type="number"
-                  step="0.1"
+                  step="any"
                   className="h-8 w-16 text-xs"
                   defaultValue={c.default_risk_pct}
                   onBlur={(e) => {
