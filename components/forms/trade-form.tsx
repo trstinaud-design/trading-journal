@@ -13,7 +13,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PositionCalculator } from "./position-calculator";
 import { ImageDropzone } from "./image-dropzone";
 import { DynamicSelect } from "./dynamic-select";
 import { PartialExitsEditor } from "./partial-exits";
@@ -188,6 +187,24 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
     setValue("session", s);
   }, [dateEntree, setValue]);
 
+  // 🔁 Auto-calcul du résultat R selon le statut et les prix
+  //   TP     → R = |TP - entrée| / |SL - entrée|  (positif)
+  //   SL     → R = -1
+  //   BE     → R = 0
+  //   MANUEL → l'utilisateur saisit lui-même
+  const takeProfit = watch("take_profit");
+  useEffect(() => {
+    if (statut === "sl") {
+      setValue("resultat_r", -1);
+    } else if (statut === "be") {
+      setValue("resultat_r", 0);
+    } else if (statut === "tp" && prixEntree != null && stopLoss != null && takeProfit != null) {
+      const risque = Math.abs(prixEntree - stopLoss);
+      const gain = Math.abs(takeProfit - prixEntree);
+      if (risque > 0) setValue("resultat_r", Number((gain / risque).toFixed(2)));
+    }
+  }, [statut, prixEntree, stopLoss, takeProfit, setValue]);
+
   // Auto-calc résultat_usd depuis résultat_r et risque_pct * capital (si tous saisis)
   const resultatR = watch("resultat_r");
   useEffect(() => {
@@ -327,13 +344,15 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
 
       {/* ================================ RANGÉE 2 ================================ */}
       <div className="space-y-3">
-        <PositionCalculator
-          paire={paire}
-          defaultCapital={capitalCompte}
-          onLotSize={(lots) => setValue("taille_lots", lots)}
-        />
         <Card>
-          <CardHeader><CardTitle className="text-base">2 · Exécution & Risk Management</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center justify-between">
+              <span>2 · Exécution &amp; Risk Management</span>
+              <span className="text-xs font-normal text-muted-foreground">
+                Capital du compte : <strong className="text-foreground tabular-nums">${capitalCompte.toLocaleString()}</strong>
+              </span>
+            </CardTitle>
+          </CardHeader>
           <CardContent className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
             <div className="space-y-1">
               <Label>Prix d&apos;entrée</Label>
@@ -367,12 +386,12 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
               <Input type="number" step="0.01" className={errCls("taille_lots")} {...register("taille_lots", { setValueAs: (v) => v === "" ? null : Number(v) })} />
             </div>
             <div className="space-y-1">
-              <Label>Résultat (R)</Label>
+              <Label>Résultat (R) <span className="text-[10px] text-muted-foreground">(auto)</span></Label>
               <Input
                 type="number"
                 step="0.01"
                 className={errCls("resultat_r")}
-                placeholder={statut === "tp" ? "auto ex: 2" : statut === "sl" ? "-1" : "0"}
+                placeholder={statut === "tp" ? "calcul auto TP/SL" : statut === "sl" ? "-1" : statut === "be" ? "0" : "à saisir"}
                 {...register("resultat_r", { setValueAs: (v) => v === "" ? null : Number(v) })}
               />
             </div>

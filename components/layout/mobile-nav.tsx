@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Plus, ListChecks, Images, Settings, LogOut, TrendingUp, Menu, X, Sparkles } from "lucide-react";
+import { LayoutDashboard, Plus, ListChecks, Images, Settings, LogOut, TrendingUp, Menu, X, Sparkles, Wallet } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ const links = [
   { href: "/trades", label: "Mes trades", icon: ListChecks },
   { href: "/insights", label: "Insights", icon: Sparkles },
   { href: "/gallery", label: "Galerie", icon: Images },
+  { href: "/comptes", label: "Comptes", icon: Wallet },
   { href: "/setups", label: "Setups & Niveaux", icon: Settings },
 ];
 
