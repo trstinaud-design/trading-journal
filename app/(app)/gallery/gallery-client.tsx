@@ -1,54 +1,63 @@
 "use client";
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { format } from "date-fns";
-import { createClient } from "@/lib/supabase/client";
+import { fr } from "date-fns/locale";
+import { Pencil } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Lightbox, type LightboxImage } from "@/components/ui/lightbox";
+import { PairFlag } from "@/components/ui/pair-flag";
 import { cn } from "@/lib/utils/cn";
 
-type Item = {
-  id: string;
+export type TradeGroup = {
   trade_id: string;
-  kind: "avant" | "pendant" | "apres";
-  url: string;
   date: string;
   paire: string;
+  direction: "long" | "short";
   statut: string;
+  resultat_r: number | null;
   setup: string | null;
   setup_id: string | null;
+  images: { id: string; kind: "avant" | "pendant" | "apres"; url: string }[];
 };
 
-export function GalleryClient({ items, setups }: { items: Item[]; setups: { id: string; nom: string }[] }) {
-  const [setupFilter, setSetupFilter] = useState<string>("all");
-  const [statutFilter, setStatutFilter] = useState<string>("all");
-  const [openTradeId, setOpenTradeId] = useState<string | null>(null);
-  const [comparePair, setComparePair] = useState<{ avant?: string; apres?: string; paire?: string } | null>(null);
+const STATUT_BADGE: Record<string, string> = {
+  tp: "bg-emerald-500 text-white",
+  sl: "bg-rose-500 text-white",
+  be: "bg-amber-400 text-black",
+  manuel: "bg-sky-500 text-white",
+};
+const KIND_LABEL: Record<string, string> = { avant: "Avant", pendant: "Pendant", apres: "Après" };
 
-  const filtered = useMemo(() => items.filter((i) => {
-    if (setupFilter !== "all" && i.setup_id !== setupFilter) return false;
-    if (statutFilter !== "all" && i.statut !== statutFilter) return false;
+export function GalleryClient({ groups, setups }: { groups: TradeGroup[]; setups: { id: string; nom: string }[] }) {
+  const [setupFilter, setSetupFilter] = useState("all");
+  const [statutFilter, setStatutFilter] = useState("all");
+  // Lightbox : liste d'images + index courant
+  const [lb, setLb] = useState<{ images: LightboxImage[]; index: number } | null>(null);
+
+  const filtered = useMemo(() => groups.filter((g) => {
+    if (setupFilter !== "all" && g.setup_id !== setupFilter) return false;
+    if (statutFilter !== "all" && g.statut !== statutFilter) return false;
     return true;
-  }), [items, setupFilter, statutFilter]);
+  }), [groups, setupFilter, statutFilter]);
 
-  async function openCompare(tradeId: string, paire: string) {
-    setOpenTradeId(tradeId);
-    const supabase = createClient();
-    const { data } = await supabase.from("trade_images").select("*").eq("trade_id", tradeId);
-    const avant = data?.find((d) => d.kind === "avant");
-    const apres = data?.find((d) => d.kind === "apres");
-    const [a1, a2] = await Promise.all([
-      avant ? supabase.storage.from("trade-images").createSignedUrl(avant.storage_path, 3600) : null,
-      apres ? supabase.storage.from("trade-images").createSignedUrl(apres.storage_path, 3600) : null,
-    ]);
-    setComparePair({ avant: a1?.data?.signedUrl, apres: a2?.data?.signedUrl, paire });
+  function openLightbox(g: TradeGroup, startIdx: number) {
+    const images: LightboxImage[] = g.images.map((im) => ({
+      url: im.url,
+      kind: KIND_LABEL[im.kind] ?? im.kind,
+      label: `${g.paire} · ${format(new Date(g.date), "d MMM yyyy HH:mm", { locale: fr })}`,
+    }));
+    setLb({ images, index: startIdx });
   }
+
+  const totalImages = filtered.reduce((s, g) => s + g.images.length, 0);
 
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-bold">Galerie de charts</h1>
-        <p className="text-sm text-muted-foreground">{filtered.length} image(s)</p>
+        <h1 className="bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-3xl font-bold">Galerie de charts</h1>
+        <p className="mt-1 text-sm text-muted-foreground">{filtered.length} trade{filtered.length > 1 ? "s" : ""} · {totalImages} image{totalImages > 1 ? "s" : ""}</p>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -71,53 +80,59 @@ export function GalleryClient({ items, setups }: { items: Item[]; setups: { id: 
         </Select>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-        {filtered.map((it) => (
-          <div key={it.id} className="group overflow-hidden rounded-lg border bg-card">
-            <div className="relative aspect-video overflow-hidden bg-muted">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={it.url} alt="" className="h-full w-full object-cover transition-transform group-hover:scale-105" />
-              <span className={cn("absolute right-2 top-2 rounded px-2 py-0.5 text-[10px] font-semibold uppercase",
-                it.statut === "tp" ? "bg-[hsl(var(--win))] text-white" :
-                it.statut === "sl" ? "bg-[hsl(var(--loss))] text-white" : "bg-muted text-foreground")}>{it.statut}</span>
-              <span className="absolute left-2 top-2 rounded bg-black/60 px-2 py-0.5 text-[10px] uppercase text-white">{it.kind}</span>
-            </div>
-            <div className="p-2">
-              <div className="flex items-baseline justify-between text-xs">
-                <span className="font-semibold">{it.paire}</span>
-                <span className="text-muted-foreground">{it.date && format(new Date(it.date), "yyyy-MM-dd HH:mm")}</span>
+      {/* Une carte par trade */}
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {filtered.map((g) => (
+          <Card key={g.trade_id} className="card-glass overflow-hidden">
+            {/* En-tête du trade */}
+            <div className="flex items-center justify-between gap-2 border-b border-border/50 p-3">
+              <div className="flex items-center gap-2">
+                <PairFlag paire={g.paire} />
+                <span className={cn("rounded px-1.5 py-0.5 text-[10px] font-bold", g.direction === "long" ? "bg-emerald-500/15 text-emerald-400" : "bg-rose-500/15 text-rose-400")}>
+                  {g.direction === "long" ? "BUY" : "SELL"}
+                </span>
               </div>
-              <div className="mt-1 flex items-center justify-between">
-                <span className="truncate text-xs text-muted-foreground">{it.setup ?? "—"}</span>
-                <Button size="sm" variant="ghost" onClick={() => openCompare(it.trade_id, it.paire)}>Comparer</Button>
+              <div className="flex items-center gap-2">
+                <span className={cn("rounded px-2 py-0.5 text-[10px] font-bold uppercase", STATUT_BADGE[g.statut] ?? "bg-muted text-foreground")}>
+                  {g.statut}
+                </span>
+                {g.resultat_r !== null && (
+                  <span className={cn("font-mono text-xs font-bold", g.resultat_r > 0 ? "text-emerald-400" : g.resultat_r < 0 ? "text-rose-400" : "text-muted-foreground")}>
+                    {g.resultat_r > 0 ? "+" : ""}{g.resultat_r.toFixed(2)}R
+                  </span>
+                )}
+                <Link href={`/trades/${g.trade_id}/edit`} className="rounded p-1 text-primary hover:bg-accent" title="Modifier le trade"><Pencil className="h-3.5 w-3.5" /></Link>
               </div>
             </div>
-          </div>
+
+            {/* Images du trade */}
+            <div className={cn("grid gap-1 p-2", g.images.length === 1 ? "grid-cols-1" : g.images.length === 2 ? "grid-cols-2" : "grid-cols-3")}>
+              {g.images.map((im, idx) => (
+                <button
+                  key={im.id}
+                  type="button"
+                  onClick={() => openLightbox(g, idx)}
+                  className="group relative aspect-video overflow-hidden rounded-md bg-muted"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={im.url} alt={im.kind} className="h-full w-full object-cover transition-transform group-hover:scale-105" />
+                  <span className="absolute left-1 top-1 rounded bg-black/70 px-1.5 py-0.5 text-[9px] uppercase text-white">{KIND_LABEL[im.kind]}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-between px-3 pb-3 text-xs text-muted-foreground">
+              <span>{g.setup ?? "—"}</span>
+              <span>{format(new Date(g.date), "d MMM yyyy · HH:mm", { locale: fr })}</span>
+            </div>
+          </Card>
         ))}
-        {filtered.length === 0 && <p className="col-span-full text-center text-sm text-muted-foreground">Aucune image</p>}
+        {filtered.length === 0 && (
+          <p className="col-span-full py-12 text-center text-sm text-muted-foreground">Aucune image pour ces filtres.</p>
+        )}
       </div>
 
-      <Dialog open={!!openTradeId} onOpenChange={(o) => { if (!o) { setOpenTradeId(null); setComparePair(null); } }}>
-        <DialogContent className="max-w-6xl">
-          <DialogHeader><DialogTitle>Avant / Après — {comparePair?.paire}</DialogTitle></DialogHeader>
-          <div className="grid gap-3 md:grid-cols-2">
-            <div>
-              <p className="mb-1 text-xs uppercase text-muted-foreground">Avant (analyse)</p>
-              {comparePair?.avant
-                // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={comparePair.avant} alt="avant" className="w-full rounded-md border" />
-                : <p className="text-sm text-muted-foreground">Pas d&apos;image</p>}
-            </div>
-            <div>
-              <p className="mb-1 text-xs uppercase text-muted-foreground">Après (résultat)</p>
-              {comparePair?.apres
-                // eslint-disable-next-line @next/next/no-img-element
-                ? <img src={comparePair.apres} alt="apres" className="w-full rounded-md border" />
-                : <p className="text-sm text-muted-foreground">Pas d&apos;image</p>}
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {lb && <Lightbox images={lb.images} index={lb.index} onIndex={(i) => setLb({ ...lb, index: i })} onClose={() => setLb(null)} />}
     </div>
   );
 }

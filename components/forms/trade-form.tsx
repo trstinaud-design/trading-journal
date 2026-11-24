@@ -16,8 +16,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ImageDropzone } from "./image-dropzone";
 import { DynamicSelect } from "./dynamic-select";
 import { PartialExitsEditor } from "./partial-exits";
-import { autoLotSize } from "@/lib/utils/pip-value";
+import { autoLotSize, riskPctFromLots } from "@/lib/utils/pip-value";
 import { sessionFromHour } from "@/lib/utils/session-from-time";
+import { cn } from "@/lib/utils/cn";
 import type { Compte, Setup, Niveau, ImageKind, PartialExit, Trade } from "@/types/database";
 
 const schema = z.object({
@@ -65,6 +66,13 @@ const STATUTS = [
   { value: "be", label: "Break Even" },
   { value: "manuel", label: "Clôture manuelle" },
 ] as const;
+// Boutons statut colorés : TP vert, SL rouge, BE jaune, Manuel neutre
+const STATUT_BTNS = [
+  { value: "tp", label: "TP", activeCls: "bg-emerald-500 text-white ring-1 ring-emerald-400 shadow-md shadow-emerald-500/30", idleCls: "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20" },
+  { value: "sl", label: "SL", activeCls: "bg-rose-500 text-white ring-1 ring-rose-400 shadow-md shadow-rose-500/30", idleCls: "bg-rose-500/10 text-rose-400 hover:bg-rose-500/20" },
+  { value: "be", label: "BE", activeCls: "bg-amber-400 text-black ring-1 ring-amber-300 shadow-md shadow-amber-400/30", idleCls: "bg-amber-400/10 text-amber-400 hover:bg-amber-400/20" },
+  { value: "manuel", label: "MAN", activeCls: "bg-sky-500 text-white ring-1 ring-sky-400 shadow-md shadow-sky-500/30", idleCls: "bg-sky-500/10 text-sky-400 hover:bg-sky-500/20" },
+] as const;
 const PAIRES_QUICK = ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "GBPJPY", "US30", "NAS100"];
 
 /** Libellés lisibles pour l'affichage des erreurs. */
@@ -104,6 +112,8 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
   const [niveaux, setNiveaux] = useState(initialNiveaux);
   const [images, setImages] = useState<Record<ImageKind, File | null>>({ avant: null, pendant: null, apres: null });
   const [submitting, setSubmitting] = useState(false);
+  // Quelle valeur l'utilisateur pilote : 'risk' → calcule les lots ; 'lots' → calcule le risque.
+  const [riskSource, setRiskSource] = useState<"risk" | "lots">("risk");
 
   const isEditMode = !!initialTrade;
   const defaultCompte = initialTrade?.compte_id ?? comptes[0]?.id ?? "";
@@ -171,14 +181,33 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
 
   // 🔁 Quand on change de compte : recharge automatiquement son % de risque par défaut.
   useEffect(() => {
-    if (compteCourant?.default_risk_pct != null) setValue("risque_pct", compteCourant.default_risk_pct);
+    if (compteCourant?.default_risk_pct != null) {
+      setRiskSource("risk");
+      setValue("risque_pct", compteCourant.default_risk_pct);
+    }
   }, [compteCourant?.id, compteCourant?.default_risk_pct, setValue]);
 
-  // 🔁 Auto-calcul de la taille de lot dès que paire + entrée + SL + capital + risque% sont dispo.
+  const tailleLots = watch("taille_lots");
+
+  // 🔁 Sens RISQUE → LOTS : quand l'utilisateur pilote le risque %, calcule la taille de lot.
   useEffect(() => {
+    if (riskSource !== "risk") return;
     const lots = autoLotSize(paire, prixEntree, stopLoss, capitalCompte, risquePct ?? 0);
-    if (lots > 0) setValue("taille_lots", Number(lots.toFixed(2)));
-  }, [paire, prixEntree, stopLoss, capitalCompte, risquePct, setValue]);
+    if (lots > 0) {
+      const rounded = Number(lots.toFixed(2));
+      if (rounded !== tailleLots) setValue("taille_lots", rounded);
+    }
+  }, [riskSource, paire, prixEntree, stopLoss, capitalCompte, risquePct, tailleLots, setValue]);
+
+  // 🔁 Sens LOTS → RISQUE : quand l'utilisateur pilote les lots, calcule le risque % en temps réel.
+  useEffect(() => {
+    if (riskSource !== "lots") return;
+    const risk = riskPctFromLots(paire, prixEntree, stopLoss, capitalCompte, tailleLots ?? 0);
+    if (risk > 0) {
+      const rounded = Number(risk.toFixed(3));
+      if (rounded !== risquePct) setValue("risque_pct", rounded);
+    }
+  }, [riskSource, paire, prixEntree, stopLoss, capitalCompte, tailleLots, risquePct, setValue]);
 
   // 🔁 Détection auto de la session selon l'heure d'entrée (heure locale).
   useEffect(() => {
@@ -214,7 +243,10 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
     }
   }, [resultatR, risquePct, capitalCompte, setValue]);
 
+  const compteCrame = compteCourant?.statut === "crame";
+
   async function onSubmit(values: FormValues) {
+    if (compteCrame) return toast.error("Ce compte est cramé (lecture seule). Choisis un autre compte.");
     setSubmitting(true);
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -280,7 +312,11 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
               <Select value={field.value} onValueChange={field.onChange}>
                 <SelectTrigger className={errCls("compte_id")}><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {comptes.map((c) => <SelectItem key={c.id} value={c.id}>{c.nom} ({c.type})</SelectItem>)}
+                  {comptes.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nom} ({c.type}){c.statut === "crame" ? " 🔒 cramé" : ""}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )} />
@@ -308,13 +344,28 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
           <div className="space-y-1">
             <Label>Direction</Label>
             <Controller name="direction" control={control} render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className={errCls("direction")}><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="long">Long (Achat)</SelectItem>
-                  <SelectItem value="short">Short (Vente)</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => field.onChange("long")}
+                  className={cn(
+                    "flex h-10 items-center justify-center rounded-md text-sm font-semibold transition-all",
+                    field.value === "long"
+                      ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30 ring-1 ring-emerald-400"
+                      : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20",
+                  )}
+                >▲ BUY</button>
+                <button
+                  type="button"
+                  onClick={() => field.onChange("short")}
+                  className={cn(
+                    "flex h-10 items-center justify-center rounded-md text-sm font-semibold transition-all",
+                    field.value === "short"
+                      ? "bg-rose-500 text-white shadow-md shadow-rose-500/30 ring-1 ring-rose-400"
+                      : "bg-rose-500/10 text-rose-400 hover:bg-rose-500/20",
+                  )}
+                >▼ SELL</button>
+              </div>
             )} />
           </div>
           <div className="space-y-1">
@@ -366,24 +417,31 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
               <Label>Take Profit</Label>
               <Input type="number" step="any" className={errCls("take_profit")} {...register("take_profit", { setValueAs: (v) => v === "" ? null : Number(v) })} />
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 lg:col-span-2">
               <Label>Statut</Label>
               <Controller name="statut" control={control} render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className={errCls("statut")}><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {STATUTS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <div className="grid grid-cols-4 gap-1">
+                  {STATUT_BTNS.map((s) => (
+                    <button
+                      key={s.value}
+                      type="button"
+                      onClick={() => field.onChange(s.value)}
+                      className={cn(
+                        "flex h-10 items-center justify-center rounded-md text-xs font-semibold transition-all",
+                        field.value === s.value ? s.activeCls : s.idleCls,
+                      )}
+                    >{s.label}</button>
+                  ))}
+                </div>
               )} />
             </div>
             <div className="space-y-1">
-              <Label>Risque (%)</Label>
-              <Input type="number" step="any" className={errCls("risque_pct")} {...register("risque_pct", { setValueAs: (v) => v === "" ? null : Number(v) })} />
+              <Label>Risque (%) {riskSource === "risk" && <span className="text-[10px] text-primary">● pilote</span>}</Label>
+              <Input type="number" step="any" className={errCls("risque_pct")} onFocus={() => setRiskSource("risk")} {...register("risque_pct", { setValueAs: (v) => v === "" ? null : Number(v) })} />
             </div>
             <div className="space-y-1">
-              <Label>Taille (lots) <span className="text-[10px] text-muted-foreground">(auto)</span></Label>
-              <Input type="number" step="0.01" className={errCls("taille_lots")} {...register("taille_lots", { setValueAs: (v) => v === "" ? null : Number(v) })} />
+              <Label>Taille (lots) {riskSource === "lots" ? <span className="text-[10px] text-primary">● pilote</span> : <span className="text-[10px] text-muted-foreground">(auto)</span>}</Label>
+              <Input type="number" step="0.01" className={errCls("taille_lots")} onFocus={() => setRiskSource("lots")} {...register("taille_lots", { setValueAs: (v) => v === "" ? null : Number(v) })} />
             </div>
             <div className="space-y-1">
               <Label>Résultat (R) <span className="text-[10px] text-muted-foreground">(auto)</span></Label>
@@ -421,7 +479,7 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
                   options={setups.map((s) => ({ id: s.id, nom: s.nom }))}
                   value={field.value}
                   onChange={field.onChange}
-                  onCreated={(opt) => setSetups((prev) => [...prev, { ...opt, user_id: "", description: null, created_at: "" }])}
+                  onCreated={(opt) => setSetups((prev) => [...prev, { ...opt, user_id: "", description: null, timeframes: [], created_at: "" }])}
                 />
               )} />
             </div>
@@ -434,7 +492,7 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
                   options={niveaux.map((n) => ({ id: n.id, nom: n.nom }))}
                   value={field.value}
                   onChange={field.onChange}
-                  onCreated={(opt) => setNiveaux((prev) => [...prev, { ...opt, user_id: "", description: null, created_at: "" }])}
+                  onCreated={(opt) => setNiveaux((prev) => [...prev, { ...opt, user_id: "", description: null, timeframes: [], created_at: "" }])}
                 />
               )} />
             </div>
@@ -477,9 +535,15 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
         </div>
       )}
 
+      {compteCrame && (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm text-amber-400">
+          🔒 Ce compte est marqué <strong>cramé</strong> (lecture seule). Ses trades restent visibles mais tu ne peux pas en ajouter. Sélectionne un autre compte pour enregistrer.
+        </div>
+      )}
+
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={() => router.back()}>Annuler</Button>
-        <Button type="submit" disabled={submitting} className="gradient-primary text-white shadow-lg shadow-primary/20 hover:opacity-90">
+        <Button type="submit" disabled={submitting || compteCrame} className="gradient-primary text-white shadow-lg shadow-primary/20 hover:opacity-90">
           {submitting ? "Enregistrement..." : isEditMode ? "Mettre à jour" : "Enregistrer le trade"}
         </Button>
       </div>

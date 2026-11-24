@@ -54,3 +54,15 @@ export function autoLotSize(paire: string, prixEntree: number | null, stopLoss: 
   const slPips = stopDistancePips(paire, prixEntree, stopLoss);
   return computeLotSize(paire, risqueUsd, slPips);
 }
+
+/**
+ * Calcul INVERSE : à partir d'une taille de lot saisie manuellement, retrouve le % de risque.
+ * risqueUsd = lots × slPips × pipValue  →  riskPct = risqueUsd / capital × 100
+ * Renvoie 0 si un paramètre manque ou incohérent.
+ */
+export function riskPctFromLots(paire: string, prixEntree: number | null, stopLoss: number | null, capital: number, lots: number): number {
+  if (!paire || prixEntree == null || stopLoss == null || prixEntree === stopLoss || capital <= 0 || lots <= 0) return 0;
+  const slPips = stopDistancePips(paire, prixEntree, stopLoss);
+  const risqueUsd = lots * slPips * pipValuePerLot(paire);
+  return (risqueUsd / capital) * 100;
+}

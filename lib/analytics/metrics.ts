@@ -148,30 +148,50 @@ export function computeStreaks(trades: Trade[]) {
 
 export type Granularity = "week" | "month" | "quarter";
 
-/** Agrège les trades par période (semaine ISO / mois YYYY-MM / trimestre YYYY-Q). */
+const MONTHS_FR = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+
+/**
+ * Agrège les trades par période.
+ * - "month" : regroupe par MOIS CALENDAIRE toutes années confondues (tous les Août ensemble),
+ *   affiché par nom de mois (Janvier → Décembre).
+ * - "quarter" : par trimestre calendaire toutes années confondues (T1..T4).
+ * - "week" : par semaine ISO (année-Snn).
+ */
 export function byPeriod(trades: Trade[], granularity: Granularity) {
-  const map = new Map<string, Trade[]>();
+  // sortKey permet l'ordre chronologique/calendaire ; label est l'affichage.
+  const map = new Map<string, { sortKey: string; label: string; trades: Trade[] }>();
+
   for (const t of trades) {
     const d = new Date(t.date_entree);
-    let key: string;
+    let sortKey: string;
+    let label: string;
+
     if (granularity === "month") {
-      key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const m = d.getMonth(); // 0-11
+      sortKey = String(m).padStart(2, "0");
+      label = MONTHS_FR[m];
     } else if (granularity === "quarter") {
-      key = `${d.getFullYear()}-Q${Math.floor(d.getMonth() / 3) + 1}`;
+      const q = Math.floor(d.getMonth() / 3) + 1;
+      sortKey = `Q${q}`;
+      label = `T${q}`;
     } else {
-      // Semaine ISO
       const tmp = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
       const dayNum = tmp.getUTCDay() || 7;
       tmp.setUTCDate(tmp.getUTCDate() + 4 - dayNum);
       const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
       const week = Math.ceil(((tmp.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
-      key = `${tmp.getUTCFullYear()}-S${String(week).padStart(2, "0")}`;
+      sortKey = `${tmp.getUTCFullYear()}-S${String(week).padStart(2, "0")}`;
+      label = `S${String(week).padStart(2, "0")} ${tmp.getUTCFullYear()}`;
     }
-    (map.get(key) ?? map.set(key, []).get(key)!).push(t);
+
+    const bucket = map.get(sortKey) ?? { sortKey, label, trades: [] };
+    bucket.trades.push(t);
+    map.set(sortKey, bucket);
   }
-  return [...map.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([label, ts]) => {
+
+  return [...map.values()]
+    .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
+    .map(({ label, trades: ts }) => {
       const kpis = computeKPIs(ts);
       return {
         label,

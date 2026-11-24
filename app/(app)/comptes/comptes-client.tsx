@@ -2,14 +2,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Trash2, Wallet } from "lucide-react";
+import { Plus, Trash2, Wallet, Flame, CheckCircle2, RotateCcw } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { Compte, AccountType } from "@/types/database";
+import { cn } from "@/lib/utils/cn";
+import type { Compte, AccountType, AccountStatus } from "@/types/database";
 
 const ACCOUNT_TYPES: { value: AccountType; label: string; description: string }[] = [
   { value: "evaluation", label: "Évaluation Prop Firm", description: "Phase de challenge avant le compte financé" },
@@ -66,6 +67,26 @@ export function ComptesClient({ comptes }: { comptes: Compte[] }) {
     if (error) return toast.error(error.message);
     router.refresh();
     toast.success("Compte supprimé");
+  }
+
+  // Marque le compte comme cramé (lecture seule) — AUCUNE donnée n'est effacée.
+  async function setStatut(id: string, statut: AccountStatus, nom: string) {
+    if (statut === "crame" && !confirm(`Marquer "${nom}" comme CRAMÉ ? Le compte reste visible avec tout son historique, mais passe en lecture seule (aucun nouveau trade). Réversible.`)) return;
+    const supabase = createClient();
+    const { error } = await supabase.from("comptes").update({ statut }).eq("id", id);
+    if (error) return toast.error(error.message);
+    router.refresh();
+    toast.success(statut === "crame" ? "Compte marqué cramé 🔒" : "Compte réactivé ✓");
+  }
+
+  // Valide le compte → type financé (prop_finance). Conserve toutes les données.
+  async function validateFunded(id: string, nom: string) {
+    if (!confirm(`Valider "${nom}" comme compte FINANCÉ (funded) ? Le type passe à « Prop Firm Financé ». Aucune donnée n'est effacée.`)) return;
+    const supabase = createClient();
+    const { error } = await supabase.from("comptes").update({ type: "prop_finance" }).eq("id", id);
+    if (error) return toast.error(error.message);
+    router.refresh();
+    toast.success("Compte validé financé ✅");
   }
 
   return (
@@ -147,6 +168,7 @@ export function ComptesClient({ comptes }: { comptes: Compte[] }) {
                 <tr>
                   <th className="p-3">Nom</th>
                   <th className="p-3">Type</th>
+                  <th className="p-3">Statut</th>
                   <th className="p-3 text-right">Capital</th>
                   <th className="p-3">Devise</th>
                   <th className="p-3 text-right">Risque défaut</th>
@@ -156,13 +178,21 @@ export function ComptesClient({ comptes }: { comptes: Compte[] }) {
               <tbody>
                 {comptes.map((c) => {
                   const typeLabel = ACCOUNT_TYPES.find((a) => a.value === c.type)?.label ?? c.type;
+                  const crame = c.statut === "crame";
                   return (
-                    <tr key={c.id} className="border-b border-border/40 last:border-0 hover:bg-accent/30">
+                    <tr key={c.id} className={cn("border-b border-border/40 last:border-0 hover:bg-accent/30", crame && "opacity-60")}>
                       <td className="p-3">
                         <Input defaultValue={c.nom} className="h-8 border-transparent bg-transparent hover:border-input" onBlur={(e) => e.target.value !== c.nom && updateField(c.id, "nom", e.target.value)} />
                       </td>
                       <td className="p-3">
                         <span className={`rounded-md px-2 py-1 text-[10px] font-semibold ${TYPE_COLORS[c.type]}`}>{typeLabel}</span>
+                      </td>
+                      <td className="p-3">
+                        {crame ? (
+                          <span className="rounded-md bg-rose-500/15 px-2 py-1 text-[10px] font-semibold text-rose-400 ring-1 ring-rose-500/30">🔒 Cramé</span>
+                        ) : (
+                          <span className="rounded-md bg-emerald-500/15 px-2 py-1 text-[10px] font-semibold text-emerald-400 ring-1 ring-emerald-500/30">● Actif</span>
+                        )}
                       </td>
                       <td className="p-3 text-right">
                         <Input type="number" defaultValue={c.capital_initial} className="h-8 w-32 text-right border-transparent bg-transparent hover:border-input" onBlur={(e) => Number(e.target.value) !== c.capital_initial && updateField(c.id, "capital_initial", Number(e.target.value))} />
@@ -176,10 +206,26 @@ export function ComptesClient({ comptes }: { comptes: Compte[] }) {
                           <span className="text-xs text-muted-foreground">%</span>
                         </div>
                       </td>
-                      <td className="p-3 text-right">
-                        <Button variant="ghost" size="icon" onClick={() => remove(c.id, c.nom)}>
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                      <td className="p-3">
+                        <div className="flex items-center justify-end gap-1">
+                          {c.type !== "prop_finance" && !crame && (
+                            <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs text-emerald-400 hover:bg-emerald-500/10" onClick={() => validateFunded(c.id, c.nom)} title="Valider → compte financé">
+                              <CheckCircle2 className="h-3.5 w-3.5" /> Valider
+                            </Button>
+                          )}
+                          {crame ? (
+                            <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs text-emerald-400 hover:bg-emerald-500/10" onClick={() => setStatut(c.id, "actif", c.nom)} title="Réactiver">
+                              <RotateCcw className="h-3.5 w-3.5" /> Réactiver
+                            </Button>
+                          ) : (
+                            <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs text-amber-400 hover:bg-amber-500/10" onClick={() => setStatut(c.id, "crame", c.nom)} title="Marquer cramé">
+                              <Flame className="h-3.5 w-3.5" /> Cramé
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="icon" onClick={() => remove(c.id, c.nom)} title="Supprimer">
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );

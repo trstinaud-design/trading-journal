@@ -1,4 +1,6 @@
 export type AccountType = "evaluation" | "prop_finance" | "reel" | "demo";
+export type AccountStatus = "actif" | "crame";
+export type Timeframe = "1m" | "5m" | "15m" | "30m" | "1h" | "4h" | "daily" | "weekly" | "monthly";
 export type Direction = "long" | "short";
 export type Session = "asie" | "londres" | "ny" | "chevauchement_ldn_ny" | "hors_timing";
 export type Emotion = "calme" | "confiant" | "impatient" | "fomo" | "revenge" | "stresse";
@@ -13,6 +15,7 @@ export type Compte = {
   capital_initial: number;
   devise: string;
   default_risk_pct: number;
+  statut: AccountStatus;
   created_at: string;
 };
 
@@ -21,6 +24,7 @@ export type Setup = {
   user_id: string;
   nom: string;
   description: string | null;
+  timeframes: Timeframe[];
   created_at: string;
 };
 
@@ -29,6 +33,7 @@ export type Niveau = {
   user_id: string;
   nom: string;
   description: string | null;
+  timeframes: Timeframe[];
   created_at: string;
 };
 
@@ -80,6 +85,8 @@ type CompteInsert = {
   type: AccountType;
   capital_initial?: number;
   devise?: string;
+  default_risk_pct?: number;
+  statut?: AccountStatus;
   created_at?: string;
 };
 type SetupInsert = {
@@ -87,6 +94,7 @@ type SetupInsert = {
   user_id: string;
   nom: string;
   description?: string | null;
+  timeframes?: Timeframe[];
   created_at?: string;
 };
 type NiveauInsert = SetupInsert;

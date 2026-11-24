@@ -11,9 +11,14 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Lightbox, type LightboxImage } from "@/components/ui/lightbox";
+import { PairFlag } from "@/components/ui/pair-flag";
 import { cn } from "@/lib/utils/cn";
 import { TradesToolbar } from "./trades-toolbar";
 import type { Trade, Setup, Niveau } from "@/types/database";
+
+const KIND_LABEL: Record<string, string> = { avant: "Avant", pendant: "Pendant", apres: "Après" };
+const KIND_ORDER: Record<string, number> = { avant: 0, pendant: 1, apres: 2 };
 
 type TradeRow = Trade & { setups?: { nom: string } | null; niveaux?: { nom: string } | null };
 
@@ -100,6 +105,24 @@ export function TradesView({
   function resetFilters() {
     setPair("all"); setSession("all"); setDirection("all"); setSetupId("all");
     setEmotion("all"); setStatut("all"); setDateFrom(""); setDateTo("");
+  }
+
+  // Lightbox pour voir les images d'un trade directement depuis la liste
+  const [lb, setLb] = useState<{ images: LightboxImage[]; index: number } | null>(null);
+  const [loadingImgs, setLoadingImgs] = useState<string | null>(null);
+
+  async function openImages(t: TradeRow) {
+    setLoadingImgs(t.id);
+    const supabase = createClient();
+    const { data } = await supabase.from("trade_images").select("*").eq("trade_id", t.id);
+    if (!data || data.length === 0) { setLoadingImgs(null); return toast("Aucune image pour ce trade"); }
+    const sorted = [...data].sort((a, b) => (KIND_ORDER[a.kind] ?? 9) - (KIND_ORDER[b.kind] ?? 9));
+    const signed = await Promise.all(sorted.map(async (im) => {
+      const { data: s } = await supabase.storage.from("trade-images").createSignedUrl(im.storage_path, 3600);
+      return { url: s?.signedUrl ?? "", kind: KIND_LABEL[im.kind] ?? im.kind, label: `${t.paire} · ${format(new Date(t.date_entree), "d MMM yyyy HH:mm", { locale: fr })}` };
+    }));
+    setLoadingImgs(null);
+    setLb({ images: signed.filter((i) => i.url), index: 0 });
   }
 
   async function deleteTrade(id: string, paire: string) {
@@ -197,7 +220,7 @@ export function TradesView({
             {filtered.map((t) => (
               <tr key={t.id} className="border-b transition-colors hover:bg-accent/40">
                 <td className="p-3 whitespace-nowrap text-xs">{format(new Date(t.date_entree), "d MMM yy", { locale: fr })}<br /><span className="text-[10px] text-muted-foreground">{format(new Date(t.date_entree), "HH:mm")}</span></td>
-                <td className="p-3 font-medium">{t.paire}</td>
+                <td className="p-3"><PairFlag paire={t.paire} /></td>
                 <td className="p-3">
                   <span className={cn("rounded px-2 py-0.5 text-[10px] font-bold", t.direction === "long" ? "bg-emerald-500/15 text-emerald-400" : "bg-rose-500/15 text-rose-400")}>
                     {t.direction === "long" ? "BUY" : "SELL"}
@@ -218,7 +241,7 @@ export function TradesView({
                 <td className="p-3 text-center">{t.respect_plan ? "✓" : "✗"}</td>
                 <td className="p-3">
                   <div className="flex justify-end gap-1">
-                    <Link href={`/gallery`} className="rounded p-1 text-sky-400 hover:bg-accent" title="Voir images"><ImageIcon className="h-4 w-4" /></Link>
+                    <button type="button" onClick={() => openImages(t)} disabled={loadingImgs === t.id} className="rounded p-1 text-sky-400 hover:bg-accent disabled:opacity-50" title="Voir les images du trade"><ImageIcon className="h-4 w-4" /></button>
                     <Link href={`/trades/${t.id}/edit`} className="rounded p-1 text-primary hover:bg-accent" title="Modifier"><Pencil className="h-4 w-4" /></Link>
                     <button type="button" onClick={() => deleteTrade(t.id, t.paire)} className="rounded p-1 text-destructive hover:bg-accent" title="Supprimer"><Trash2 className="h-4 w-4" /></button>
                   </div>
@@ -233,6 +256,8 @@ export function TradesView({
           </tbody>
         </table>
       </Card>
+
+      {lb && <Lightbox images={lb.images} index={lb.index} onIndex={(i) => setLb({ ...lb, index: i })} onClose={() => setLb(null)} />}
     </div>
   );
 }

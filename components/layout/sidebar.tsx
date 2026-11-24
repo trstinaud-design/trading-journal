@@ -29,7 +29,7 @@ export function Sidebar({ email }: { email: string | null }) {
   }
 
   return (
-    <aside className="flex h-screen w-64 flex-col border-r border-border/60 card-glass p-4">
+    <aside className="sticky top-0 flex h-screen w-64 flex-col border-r liquid-glass p-4">
       <div className="mb-8 flex items-center gap-2.5">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-gold glow-gold">
           <TrendingUp className="h-5 w-5 text-slate-900" />
@@ -40,7 +40,7 @@ export function Sidebar({ email }: { email: string | null }) {
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1">
+      <nav className="relative flex-1 space-y-1">
         {links.map(({ href, label, icon: Icon, highlight }) => {
           const active = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
           return (
@@ -48,15 +48,15 @@ export function Sidebar({ email }: { email: string | null }) {
               key={href}
               href={href}
               className={cn(
-                "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+                "group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300",
                 active
-                  ? "bg-primary/15 text-primary shadow-sm"
+                  ? "nav-active bg-primary/15 text-primary shadow-sm ring-1 ring-primary/20"
                   : highlight
                     ? "text-foreground hover:bg-primary/10 hover:text-primary"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                    : "text-muted-foreground hover:bg-white/5 hover:text-foreground hover:backdrop-blur-sm",
               )}
             >
-              <Icon className={cn("h-4 w-4 transition-transform", highlight && !active && "text-primary group-hover:scale-110")} />
+              <Icon className={cn("h-4 w-4 transition-transform duration-300", highlight && !active && "text-primary group-hover:scale-110", active && "scale-110")} />
               {label}
               {highlight && !active && (
                 <span className="ml-auto text-[10px] font-semibold uppercase text-primary/70">Nouveau</span>
@@ -66,7 +66,7 @@ export function Sidebar({ email }: { email: string | null }) {
         })}
       </nav>
 
-      <div className="border-t border-border/60 pt-3">
+      <div className="border-t border-white/10 pt-3">
         <div className="flex items-center justify-between">
           <Button variant="ghost" className="flex-1 justify-start text-muted-foreground hover:text-destructive" onClick={logout}>
             <LogOut className="h-4 w-4" /> Déconnexion

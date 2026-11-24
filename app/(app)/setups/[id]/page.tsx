@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { KPICard } from "@/components/dashboard/kpi-card";
 import { computeKPIs } from "@/lib/analytics/metrics";
+import { TimeframeBadges } from "@/components/ui/timeframe-picker";
 import { cn } from "@/lib/utils/cn";
 import type { Trade, Setup } from "@/types/database";
 
@@ -35,6 +36,9 @@ export default async function SetupDetailPage({ params }: { params: Promise<{ id
       <div>
         <h1 className="bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-3xl font-bold">{s.nom}</h1>
         {s.description && <p className="mt-1 text-sm text-muted-foreground">{s.description}</p>}
+        {s.timeframes && s.timeframes.length > 0 && (
+          <div className="mt-2"><TimeframeBadges value={s.timeframes} /></div>
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

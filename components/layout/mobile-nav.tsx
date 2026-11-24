@@ -42,7 +42,7 @@ export function MobileNav({ email }: { email: string | null }) {
   return (
     <>
       {/* Top bar mobile */}
-      <div className="flex items-center justify-between border-b border-border/60 card-glass px-4 py-3 lg:hidden">
+      <div className="sticky top-0 z-40 flex items-center justify-between border-b liquid-glass px-4 py-3 lg:hidden">
         <div className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-gold"><TrendingUp className="h-4 w-4 text-slate-900" /></div>
           <span className="text-sm font-semibold">Trading Journal</span>
@@ -61,7 +61,7 @@ export function MobileNav({ email }: { email: string | null }) {
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden" onClick={() => setOpen(false)}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-          <aside className="absolute inset-y-0 left-0 flex w-72 flex-col card-glass p-4" onClick={(e) => e.stopPropagation()}>
+          <aside className="absolute inset-y-0 left-0 flex w-72 flex-col liquid-glass p-4 duration-300 animate-in slide-in-from-left" onClick={(e) => e.stopPropagation()}>
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-gold glow-gold">
