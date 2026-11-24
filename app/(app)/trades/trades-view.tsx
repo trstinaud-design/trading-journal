@@ -20,7 +20,11 @@ import type { Trade, Setup, Niveau } from "@/types/database";
 const KIND_LABEL: Record<string, string> = { avant: "Avant", pendant: "Pendant", apres: "Après" };
 const KIND_ORDER: Record<string, number> = { avant: 0, pendant: 1, apres: 2 };
 
-type TradeRow = Trade & { setups?: { nom: string } | null; niveaux?: { nom: string } | null };
+type TradeRow = Trade & {
+  setups?: { nom: string } | null;
+  niveaux?: { nom: string } | null;
+  comptes?: { nom: string; capital_initial: number; devise: string } | null;
+};
 
 const STATUT_COLOR: Record<string, string> = {
   tp: "bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/30",
@@ -209,6 +213,7 @@ export function TradesView({
               <th className="p-3">Session</th>
               <th className="p-3">Setup</th>
               <th className="p-3">Niveau</th>
+              <th className="p-3">Compte</th>
               <th className="p-3">Statut</th>
               <th className="p-3 text-right">R</th>
               <th className="p-3 text-right">$</th>
@@ -230,6 +235,15 @@ export function TradesView({
                 <td className="p-3">{t.setups?.nom ?? "—"}</td>
                 <td className="p-3">{t.niveaux?.nom ?? "—"}</td>
                 <td className="p-3">
+                  {t.comptes ? (
+                    <div className="leading-tight">
+                      <span className="text-xs font-medium">{t.comptes.nom}</span>
+                      <br />
+                      <span className="text-[10px] text-muted-foreground tabular-nums">{t.comptes.capital_initial.toLocaleString()} {t.comptes.devise}</span>
+                    </div>
+                  ) : <span className="text-muted-foreground">—</span>}
+                </td>
+                <td className="p-3">
                   <span className={cn("rounded-md px-2 py-0.5 text-[10px] font-bold", STATUT_COLOR[t.statut])}>{STATUT_LABEL[t.statut]}</span>
                 </td>
                 <td className={cn("p-3 text-right font-mono tabular-nums", (t.resultat_r ?? 0) > 0 && "text-emerald-400", (t.resultat_r ?? 0) < 0 && "text-rose-400")}>
@@ -249,7 +263,7 @@ export function TradesView({
               </tr>
             ))}
             {filtered.length === 0 && (
-              <tr><td colSpan={11} className="p-8 text-center text-muted-foreground">
+              <tr><td colSpan={12} className="p-8 text-center text-muted-foreground">
                 {trades.length === 0 ? (<>Aucun trade — <Link href="/trades/new" className="text-primary underline">créer le premier</Link></>) : "Aucun trade ne correspond aux filtres"}
               </td></tr>
             )}
