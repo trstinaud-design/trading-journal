@@ -3,19 +3,27 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { TradeForm } from "@/components/forms/trade-form";
-import type { Trade } from "@/types/database";
+import type { Trade, TradeImage, ImageKind } from "@/types/database";
 
 export default async function EditTradePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
-  const [{ data: trade }, { data: comptes }, { data: setups }, { data: niveaux }] = await Promise.all([
+  const [{ data: trade }, { data: comptes }, { data: setups }, { data: niveaux }, { data: imgs }] = await Promise.all([
     supabase.from("trades").select("*").eq("id", id).single(),
     supabase.from("comptes").select("*").order("created_at"),
     supabase.from("setups").select("*").order("nom"),
     supabase.from("niveaux").select("*").order("nom"),
+    supabase.from("trade_images").select("*").eq("trade_id", id),
   ]);
 
   if (!trade) return notFound();
+
+  // Signe les URLs des images déjà enregistrées pour les afficher dans le formulaire
+  const existingImages: Partial<Record<ImageKind, string>> = {};
+  for (const img of (imgs as TradeImage[]) ?? []) {
+    const { data } = await supabase.storage.from("trade-images").createSignedUrl(img.storage_path, 3600);
+    if (data?.signedUrl) existingImages[img.kind] = data.signedUrl;
+  }
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -31,6 +39,7 @@ export default async function EditTradePage({ params }: { params: Promise<{ id: 
         setups={setups ?? []}
         niveaux={niveaux ?? []}
         initialTrade={trade as Trade}
+        existingImages={existingImages}
       />
     </div>
   );

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -117,9 +117,11 @@ type Props = {
   niveaux: Niveau[];
   /** Fournir un trade existant pour passer en mode édition. */
   initialTrade?: Trade;
+  /** URLs signées des images déjà enregistrées (mode édition). */
+  existingImages?: Partial<Record<ImageKind, string>>;
 };
 
-export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNiveaux, initialTrade }: Props) {
+export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNiveaux, initialTrade, existingImages }: Props) {
   const router = useRouter();
   const [setups, setSetups] = useState(initialSetups);
   const [niveaux, setNiveaux] = useState(initialNiveaux);
@@ -189,6 +191,11 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
   const errCls = (name: keyof FormValues) =>
     errors[name] ? "border-destructive ring-1 ring-destructive/40 focus-visible:ring-destructive" : "";
 
+  // En mode édition : on bloque les auto-calculs au 1er rendu pour NE PAS
+  // écraser les valeurs enregistrées (session, R, risque, lots...). Ils se
+  // réactivent dès que l'utilisateur modifie un champ.
+  const skipAuto = useRef(isEditMode);
+
   const paire = watch("paire");
   const statut = watch("statut");
   const risquePct = watch("risque_pct");
@@ -201,6 +208,7 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
 
   // 🔁 Pré-remplit les timeframes du trade avec ceux par défaut du setup choisi (si vide).
   useEffect(() => {
+    if (skipAuto.current) return;
     if (!setupId) return;
     const s = setups.find((x) => x.id === setupId);
     if (s?.timeframes?.length && (watch("setup_timeframes") ?? []).length === 0) {
@@ -209,6 +217,7 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
   }, [setupId, setups, setValue, watch]);
 
   useEffect(() => {
+    if (skipAuto.current) return;
     if (!niveauId) return;
     const n = niveaux.find((x) => x.id === niveauId);
     if (n?.timeframes?.length && (watch("niveau_timeframes") ?? []).length === 0) {
@@ -221,6 +230,7 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
 
   // 🔁 Quand on change de compte : recharge automatiquement son % de risque par défaut.
   useEffect(() => {
+    if (skipAuto.current) return;
     if (compteCourant?.default_risk_pct != null) {
       setRiskSource("risk");
       setValue("risque_pct", compteCourant.default_risk_pct);
@@ -231,6 +241,7 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
 
   // 🔁 Sens RISQUE → LOTS : quand l'utilisateur pilote le risque %, calcule la taille de lot.
   useEffect(() => {
+    if (skipAuto.current) return;
     if (riskSource !== "risk") return;
     const lots = autoLotSize(paire, prixEntree, stopLoss, capitalCompte, risquePct ?? 0);
     if (lots > 0) {
@@ -241,6 +252,7 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
 
   // 🔁 Sens LOTS → RISQUE : quand l'utilisateur pilote les lots, calcule le risque % en temps réel.
   useEffect(() => {
+    if (skipAuto.current) return;
     if (riskSource !== "lots") return;
     const risk = riskPctFromLots(paire, prixEntree, stopLoss, capitalCompte, tailleLots ?? 0);
     if (risk > 0) {
@@ -251,6 +263,7 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
 
   // 🔁 Détection auto de la session selon l'heure d'entrée (heure locale).
   useEffect(() => {
+    if (skipAuto.current) return;
     if (!dateEntree) return;
     const s = sessionFromHour(dateEntree);
     setValue("session", s);
@@ -263,6 +276,7 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
   //   MANUEL → l'utilisateur saisit lui-même
   const takeProfit = watch("take_profit");
   useEffect(() => {
+    if (skipAuto.current) return;
     if (statut === "sl") {
       setValue("resultat_r", -1);
     } else if (statut === "be") {
@@ -277,11 +291,19 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
   // Auto-calc résultat_usd depuis résultat_r et risque_pct * capital (si tous saisis)
   const resultatR = watch("resultat_r");
   useEffect(() => {
+    if (skipAuto.current) return;
     if (resultatR !== null && risquePct !== null) {
       const risqueUsd = (capitalCompte * risquePct) / 100;
       setValue("resultat_usd", Number((resultatR * risqueUsd).toFixed(2)));
     }
   }, [resultatR, risquePct, capitalCompte, setValue]);
+
+  // Réactive les auto-calculs APRÈS le premier rendu (déclaré en dernier pour
+  // que tous les effets auto ci-dessus aient déjà été ignorés au chargement).
+  useEffect(() => {
+    const id = setTimeout(() => { skipAuto.current = false; }, 0);
+    return () => clearTimeout(id);
+  }, []);
 
   const compteCrame = compteCourant?.statut === "crame";
 
@@ -313,14 +335,17 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
       return toast.error(error?.message ?? "Erreur enregistrement trade");
     }
 
-    // 2) Upload images (parallèle)
+    // 2) Upload images (parallèle). upsert → remplace proprement une image existante (mode édition).
     const uploads = (Object.entries(images) as [ImageKind, File | null][])
       .filter(([, f]) => f)
       .map(async ([kind, file]) => {
         const path = `${user.id}/${trade.id}/${kind}-${Date.now()}.${file!.name.split(".").pop()}`;
         const { error: upErr } = await supabase.storage.from("trade-images").upload(path, file!);
         if (upErr) throw upErr;
-        await supabase.from("trade_images").insert({ user_id: user.id, trade_id: trade.id, kind, storage_path: path });
+        await supabase.from("trade_images").upsert(
+          { user_id: user.id, trade_id: trade.id, kind, storage_path: path },
+          { onConflict: "trade_id,kind" },
+        );
       });
 
     try { await Promise.all(uploads); }
@@ -568,10 +593,13 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            <ImageDropzone kind="avant"   label="Chart Avant (Analyse)"  value={images.avant}   onChange={(f) => setImages((s) => ({ ...s, avant: f }))} />
-            <ImageDropzone kind="pendant" label="Chart Pendant"           value={images.pendant} onChange={(f) => setImages((s) => ({ ...s, pendant: f }))} />
-            <ImageDropzone kind="apres"   label="Chart Après (Résultat)" value={images.apres}   onChange={(f) => setImages((s) => ({ ...s, apres: f }))} />
+            <ImageDropzone kind="avant"   label="Chart Avant (Analyse)"  value={images.avant}   existingUrl={existingImages?.avant}   onChange={(f) => setImages((s) => ({ ...s, avant: f }))} />
+            <ImageDropzone kind="pendant" label="Chart Pendant"           value={images.pendant} existingUrl={existingImages?.pendant} onChange={(f) => setImages((s) => ({ ...s, pendant: f }))} />
+            <ImageDropzone kind="apres"   label="Chart Après (Résultat)" value={images.apres}   existingUrl={existingImages?.apres}   onChange={(f) => setImages((s) => ({ ...s, apres: f }))} />
           </div>
+          {isEditMode && (existingImages?.avant || existingImages?.pendant || existingImages?.apres) && (
+            <p className="text-[11px] text-muted-foreground">💡 Les images affichées sont celles déjà enregistrées. Dépose une nouvelle image pour la remplacer.</p>
+          )}
 
           <div className="space-y-1">
             <Label>Commentaires & auto-analyse</Label>
