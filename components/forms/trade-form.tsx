@@ -19,6 +19,7 @@ import { PartialExitsEditor } from "./partial-exits";
 import { autoLotSize, riskPctFromLots } from "@/lib/utils/pip-value";
 import { sessionFromHour } from "@/lib/utils/session-from-time";
 import { cn } from "@/lib/utils/cn";
+import { pairIcons } from "@/components/ui/pair-flag";
 import type { Compte, Setup, Niveau, ImageKind, PartialExit, Trade } from "@/types/database";
 
 const schema = z.object({
@@ -66,13 +67,20 @@ const STATUTS = [
   { value: "be", label: "Break Even" },
   { value: "manuel", label: "Clôture manuelle" },
 ] as const;
-// Boutons statut colorés : TP vert, SL rouge, BE jaune, Manuel neutre
-const STATUT_BTNS = [
-  { value: "tp", label: "TP", activeCls: "bg-emerald-500 text-white ring-1 ring-emerald-400 shadow-md shadow-emerald-500/30", idleCls: "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20" },
-  { value: "sl", label: "SL", activeCls: "bg-rose-500 text-white ring-1 ring-rose-400 shadow-md shadow-rose-500/30", idleCls: "bg-rose-500/10 text-rose-400 hover:bg-rose-500/20" },
-  { value: "be", label: "BE", activeCls: "bg-amber-400 text-black ring-1 ring-amber-300 shadow-md shadow-amber-400/30", idleCls: "bg-amber-400/10 text-amber-400 hover:bg-amber-400/20" },
-  { value: "manuel", label: "MAN", activeCls: "bg-sky-500 text-white ring-1 ring-sky-400 shadow-md shadow-sky-500/30", idleCls: "bg-sky-500/10 text-sky-400 hover:bg-sky-500/20" },
-] as const;
+// Couleurs par statut (TP vert, SL rouge, BE jaune, Manuel bleu)
+const STATUT_TEXT: Record<string, string> = {
+  tp: "text-emerald-400", sl: "text-rose-400", be: "text-amber-400", manuel: "text-sky-400",
+};
+const STATUT_TRIGGER: Record<string, string> = {
+  tp: "border-emerald-500/50 text-emerald-400",
+  sl: "border-rose-500/50 text-rose-400",
+  be: "border-amber-500/50 text-amber-400",
+  manuel: "border-sky-500/50 text-sky-400",
+};
+// Couleurs par session
+const SESSION_DOT: Record<string, string> = {
+  asie: "bg-violet-400", londres: "bg-orange-400", ny: "bg-blue-400", hors_timing: "bg-rose-400",
+};
 const PAIRES_QUICK = ["XAUUSD", "EURUSD", "GBPUSD", "USDJPY", "GBPJPY", "US30", "NAS100"];
 
 /** Libellés lisibles pour l'affichage des erreurs. */
@@ -326,7 +334,10 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
             <Input type="datetime-local" className={errCls("date_entree")} {...register("date_entree")} />
           </div>
           <div className="space-y-1">
-            <Label>Paire / Actif</Label>
+            <Label className="flex items-center gap-1.5">
+              Paire / Actif
+              {paire && <span className="text-base leading-none">{pairIcons(paire)}</span>}
+            </Label>
             <div className="flex gap-1">
               <Input {...register("paire")} className={`uppercase ${errCls("paire")}`} />
             </div>
@@ -336,45 +347,45 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
                   key={p}
                   type="button"
                   onClick={() => setValue("paire", p)}
-                  className="rounded bg-muted px-2 py-0.5 text-[10px] hover:bg-accent"
-                >{p}</button>
+                  className="flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-[10px] hover:bg-accent"
+                >{pairIcons(p)} {p}</button>
               ))}
             </div>
           </div>
           <div className="space-y-1">
             <Label>Direction</Label>
             <Controller name="direction" control={control} render={({ field }) => (
-              <div className="grid grid-cols-2 gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => field.onChange("long")}
-                  className={cn(
-                    "flex h-10 items-center justify-center rounded-md text-sm font-semibold transition-all",
-                    field.value === "long"
-                      ? "bg-emerald-500 text-white shadow-md shadow-emerald-500/30 ring-1 ring-emerald-400"
-                      : "bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20",
-                  )}
-                >▲ BUY</button>
-                <button
-                  type="button"
-                  onClick={() => field.onChange("short")}
-                  className={cn(
-                    "flex h-10 items-center justify-center rounded-md text-sm font-semibold transition-all",
-                    field.value === "short"
-                      ? "bg-rose-500 text-white shadow-md shadow-rose-500/30 ring-1 ring-rose-400"
-                      : "bg-rose-500/10 text-rose-400 hover:bg-rose-500/20",
-                  )}
-                >▼ SELL</button>
-              </div>
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger className={cn("font-semibold", errCls("direction"),
+                  field.value === "long" ? "border-emerald-500/50 text-emerald-400" : "border-rose-500/50 text-rose-400")}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="long"><span className="font-semibold text-emerald-400">▲ BUY (Long)</span></SelectItem>
+                  <SelectItem value="short"><span className="font-semibold text-rose-400">▼ SELL (Short)</span></SelectItem>
+                </SelectContent>
+              </Select>
             )} />
           </div>
           <div className="space-y-1">
             <Label>Session <span className="text-[10px] text-muted-foreground">(auto)</span></Label>
             <Controller name="session" control={control} render={({ field }) => (
               <Select value={field.value ?? undefined} onValueChange={field.onChange}>
-                <SelectTrigger className={errCls("session")}><SelectValue /></SelectTrigger>
+                <SelectTrigger className={errCls("session")}>
+                  <span className="flex items-center gap-2">
+                    {field.value && <span className={cn("h-2.5 w-2.5 rounded-full", SESSION_DOT[field.value])} />}
+                    <SelectValue />
+                  </span>
+                </SelectTrigger>
                 <SelectContent>
-                  {SESSIONS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}
+                  {SESSIONS.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>
+                      <span className="flex items-center gap-2">
+                        <span className={cn("h-2.5 w-2.5 rounded-full", SESSION_DOT[s.value])} />
+                        {s.label}
+                      </span>
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             )} />
@@ -417,22 +428,21 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
               <Label>Take Profit</Label>
               <Input type="number" step="any" className={errCls("take_profit")} {...register("take_profit", { setValueAs: (v) => v === "" ? null : Number(v) })} />
             </div>
-            <div className="space-y-1 lg:col-span-2">
+            <div className="space-y-1">
               <Label>Statut</Label>
               <Controller name="statut" control={control} render={({ field }) => (
-                <div className="grid grid-cols-4 gap-1">
-                  {STATUT_BTNS.map((s) => (
-                    <button
-                      key={s.value}
-                      type="button"
-                      onClick={() => field.onChange(s.value)}
-                      className={cn(
-                        "flex h-10 items-center justify-center rounded-md text-xs font-semibold transition-all",
-                        field.value === s.value ? s.activeCls : s.idleCls,
-                      )}
-                    >{s.label}</button>
-                  ))}
-                </div>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger className={cn("font-semibold", errCls("statut"), STATUT_TRIGGER[field.value])}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUTS.map((s) => (
+                      <SelectItem key={s.value} value={s.value}>
+                        <span className={cn("font-semibold", STATUT_TEXT[s.value])}>{s.label}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )} />
             </div>
             <div className="space-y-1">
