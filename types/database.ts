@@ -62,6 +62,8 @@ export type Trade = {
   resultat_usd: number | null;
   setup_id: string | null;
   niveau_id: string | null;
+  setup_timeframes: Timeframe[];
+  niveau_timeframes: Timeframe[];
   respect_plan: boolean;
   commentaire: string | null;
   partial_exits: PartialExit[];
@@ -117,6 +119,8 @@ type TradeInsert = {
   resultat_usd?: number | null;
   setup_id?: string | null;
   niveau_id?: string | null;
+  setup_timeframes?: Timeframe[];
+  niveau_timeframes?: Timeframe[];
   respect_plan?: boolean;
   commentaire?: string | null;
   created_at?: string;

@@ -20,7 +20,8 @@ import { autoLotSize, riskPctFromLots } from "@/lib/utils/pip-value";
 import { sessionFromHour } from "@/lib/utils/session-from-time";
 import { cn } from "@/lib/utils/cn";
 import { pairIcons } from "@/components/ui/pair-flag";
-import type { Compte, Setup, Niveau, ImageKind, PartialExit, Trade } from "@/types/database";
+import { TimeframePicker } from "@/components/ui/timeframe-picker";
+import type { Compte, Setup, Niveau, ImageKind, PartialExit, Trade, Timeframe } from "@/types/database";
 
 const schema = z.object({
   compte_id: z.string().uuid(),
@@ -41,6 +42,8 @@ const schema = z.object({
 
   setup_id: z.string().uuid().nullable(),
   niveau_id: z.string().uuid().nullable(),
+  setup_timeframes: z.array(z.string()).default([]),
+  niveau_timeframes: z.array(z.string()).default([]),
   respect_plan: z.boolean(),
   commentaire: z.string().nullable(),
   partial_exits: z.array(z.object({ price: z.number(), pct: z.number(), r_partial: z.number() })).default([]),
@@ -101,6 +104,8 @@ const FIELD_LABELS: Record<string, string> = {
   resultat_usd: "Résultat ($)",
   setup_id: "Setup",
   niveau_id: "Niveau",
+  setup_timeframes: "Timeframes du setup",
+  niveau_timeframes: "Timeframes du niveau",
   respect_plan: "Respect du plan",
   commentaire: "Commentaire",
   partial_exits: "Sorties partielles",
@@ -124,7 +129,11 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
   const [riskSource, setRiskSource] = useState<"risk" | "lots">("risk");
 
   const isEditMode = !!initialTrade;
-  const defaultCompte = initialTrade?.compte_id ?? comptes[0]?.id ?? "";
+  // Comptes sélectionnables : on masque les comptes cramés (lecture seule),
+  // sauf celui déjà rattaché au trade en cours d'édition.
+  const comptesVisibles = comptes.filter((c) => c.statut !== "crame" || c.id === initialTrade?.compte_id);
+  const premierActif = comptes.find((c) => c.statut !== "crame");
+  const defaultCompte = initialTrade?.compte_id ?? premierActif?.id ?? comptes[0]?.id ?? "";
   const defaultCapital = comptes.find((c) => c.id === defaultCompte)?.capital_initial ?? 10000;
 
   const { register, handleSubmit, watch, setValue, control, formState: { errors } } = useForm<FormValues>({
@@ -146,6 +155,8 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
       resultat_usd: initialTrade.resultat_usd,
       setup_id: initialTrade.setup_id,
       niveau_id: initialTrade.niveau_id,
+      setup_timeframes: initialTrade.setup_timeframes ?? [],
+      niveau_timeframes: initialTrade.niveau_timeframes ?? [],
       respect_plan: initialTrade.respect_plan,
       commentaire: initialTrade.commentaire ?? "",
       partial_exits: initialTrade.partial_exits ?? [],
@@ -166,6 +177,8 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
       resultat_usd: null,
       setup_id: null,
       niveau_id: null,
+      setup_timeframes: [],
+      niveau_timeframes: [],
       respect_plan: true,
       commentaire: "",
       partial_exits: [],
@@ -183,6 +196,25 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
   const prixEntree = watch("prix_entree");
   const stopLoss = watch("stop_loss");
   const dateEntree = watch("date_entree");
+  const setupId = watch("setup_id");
+  const niveauId = watch("niveau_id");
+
+  // 🔁 Pré-remplit les timeframes du trade avec ceux par défaut du setup choisi (si vide).
+  useEffect(() => {
+    if (!setupId) return;
+    const s = setups.find((x) => x.id === setupId);
+    if (s?.timeframes?.length && (watch("setup_timeframes") ?? []).length === 0) {
+      setValue("setup_timeframes", s.timeframes);
+    }
+  }, [setupId, setups, setValue, watch]);
+
+  useEffect(() => {
+    if (!niveauId) return;
+    const n = niveaux.find((x) => x.id === niveauId);
+    if (n?.timeframes?.length && (watch("niveau_timeframes") ?? []).length === 0) {
+      setValue("niveau_timeframes", n.timeframes);
+    }
+  }, [niveauId, niveaux, setValue, watch]);
 
   const compteCourant = useMemo(() => comptes.find((c) => c.id === compteId), [comptes, compteId]);
   const capitalCompte = compteCourant?.capital_initial ?? defaultCapital;
@@ -320,7 +352,7 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
               <Select value={field.value} onValueChange={field.onChange}>
                 <SelectTrigger className={errCls("compte_id")}><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {comptes.map((c) => (
+                  {comptesVisibles.map((c) => (
                     <SelectItem key={c.id} value={c.id}>
                       {c.nom} ({c.type}){c.statut === "crame" ? " 🔒 cramé" : ""}
                     </SelectItem>
@@ -492,6 +524,14 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
                   onCreated={(opt) => setSetups((prev) => [...prev, { ...opt, user_id: "", description: null, timeframes: [], created_at: "" }])}
                 />
               )} />
+              {setupId && (
+                <div className="pt-1">
+                  <Label className="text-[11px] text-muted-foreground">Timeframe(s) du setup</Label>
+                  <Controller name="setup_timeframes" control={control} render={({ field }) => (
+                    <TimeframePicker value={(field.value ?? []) as Timeframe[]} onChange={field.onChange} size="sm" />
+                  )} />
+                </div>
+              )}
             </div>
             <div className="space-y-1">
               <Label>Niveau / Zone clé</Label>
@@ -505,6 +545,14 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
                   onCreated={(opt) => setNiveaux((prev) => [...prev, { ...opt, user_id: "", description: null, timeframes: [], created_at: "" }])}
                 />
               )} />
+              {niveauId && (
+                <div className="pt-1">
+                  <Label className="text-[11px] text-muted-foreground">Timeframe(s) du niveau</Label>
+                  <Controller name="niveau_timeframes" control={control} render={({ field }) => (
+                    <TimeframePicker value={(field.value ?? []) as Timeframe[]} onChange={field.onChange} size="sm" />
+                  )} />
+                </div>
+              )}
             </div>
             <div className="flex items-end gap-3">
               <div>
