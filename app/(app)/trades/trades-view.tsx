@@ -66,6 +66,13 @@ export function TradesView({
   const [dateTo, setDateTo] = useState<string>("");
   const [sort, setSort] = useState<SortKey>("date_desc");
 
+  const setupMap = useMemo(() => new Map(setups.map((s) => [s.id, s.nom])), [setups]);
+  const niveauMap = useMemo(() => new Map(niveaux.map((n) => [n.id, n.nom])), [niveaux]);
+  const namesFrom = (ids: string[] | undefined, map: Map<string, string>, fallback?: string | null) => {
+    if (ids && ids.length) return ids.map((id) => map.get(id) ?? "?").join(", ");
+    return fallback ?? "—";
+  };
+
   // Options distinctes
   const distinctPairs = useMemo(() => [...new Set(trades.map((t) => t.paire))].sort(), [trades]);
   const distinctEmotions = useMemo(() => [...new Set(trades.map((t) => t.emotion).filter(Boolean) as string[])].sort(), [trades]);
@@ -77,7 +84,7 @@ export function TradesView({
     if (pair !== "all") list = list.filter((t) => t.paire === pair);
     if (session !== "all") list = list.filter((t) => t.session === session);
     if (direction !== "all") list = list.filter((t) => t.direction === direction);
-    if (setupId !== "all") list = list.filter((t) => t.setup_id === setupId);
+    if (setupId !== "all") list = list.filter((t) => (t.setup_ids?.length ? t.setup_ids.includes(setupId) : t.setup_id === setupId));
     if (emotion !== "all") list = list.filter((t) => t.emotion === emotion);
     if (statut !== "all") list = list.filter((t) => t.statut === statut);
     if (dateFrom) list = list.filter((t) => t.date_entree >= dateFrom);
@@ -232,8 +239,8 @@ export function TradesView({
                   </span>
                 </td>
                 <td className="p-3 text-xs text-muted-foreground">{t.session ? sessionLabel(t.session) : "—"}</td>
-                <td className="p-3">{t.setups?.nom ?? "—"}</td>
-                <td className="p-3">{t.niveaux?.nom ?? "—"}</td>
+                <td className="p-3">{namesFrom(t.setup_ids, setupMap, t.setups?.nom)}</td>
+                <td className="p-3">{namesFrom(t.niveau_ids, niveauMap, t.niveaux?.nom)}</td>
                 <td className="p-3">
                   {t.comptes ? (
                     <div className="leading-tight">

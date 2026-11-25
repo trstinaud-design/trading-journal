@@ -118,6 +118,19 @@ export function groupByKey<K extends keyof Trade>(trades: Trade[], key: K) {
   return [...map.entries()].map(([k, ts]) => ({ key: k, ...computeKPIs(ts) }));
 }
 
+/** Agrège par clef TABLEAU (setup_ids, niveau_ids) : un trade compte dans chaque valeur. */
+export function groupByArrayKey<K extends keyof Trade>(trades: Trade[], key: K) {
+  const map = new Map<string, Trade[]>();
+  for (const t of trades) {
+    const arr = (t[key] as unknown as string[] | null) ?? [];
+    const ids = arr.length ? arr : ["—"];
+    for (const id of ids) {
+      (map.get(id) ?? map.set(id, []).get(id)!).push(t);
+    }
+  }
+  return [...map.entries()].map(([k, ts]) => ({ key: k, ...computeKPIs(ts) }));
+}
+
 /** Séries consécutives de gains/pertes (chronologique). */
 export function computeStreaks(trades: Trade[]) {
   const chrono = [...trades]

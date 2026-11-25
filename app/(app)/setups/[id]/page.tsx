@@ -16,7 +16,7 @@ export default async function SetupDetailPage({ params }: { params: Promise<{ id
   const supabase = await createClient();
   const [{ data: setup }, { data: trades }] = await Promise.all([
     supabase.from("setups").select("*").eq("id", id).single(),
-    supabase.from("trades").select("*").eq("setup_id", id).order("date_entree", { ascending: false }),
+    supabase.from("trades").select("*").or(`setup_id.eq.${id},setup_ids.cs.{${id}}`).order("date_entree", { ascending: false }),
   ]);
   if (!setup) return notFound();
 

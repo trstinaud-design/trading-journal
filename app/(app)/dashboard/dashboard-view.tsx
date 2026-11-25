@@ -11,7 +11,7 @@ import { SessionPie } from "@/components/dashboard/session-pie";
 import { StreaksCard } from "@/components/dashboard/streaks-card";
 import { PeriodChart } from "@/components/dashboard/period-chart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { computeKPIs, equityCurveR, byDayOfWeek, byCalendarDay, groupByKey, computeStreaks, byPeriod } from "@/lib/analytics/metrics";
+import { computeKPIs, equityCurveR, byDayOfWeek, byCalendarDay, groupByKey, groupByArrayKey, computeStreaks, byPeriod } from "@/lib/analytics/metrics";
 import { cn } from "@/lib/utils/cn";
 import type { Trade, Setup, Niveau, Compte } from "@/types/database";
 
@@ -49,8 +49,8 @@ export function DashboardView({ trades, comptes, setups, niveaux }: Props) {
     month: byPeriod(list, "month"),
     quarter: byPeriod(list, "quarter"),
   }), [list]);
-  const bySetup = useMemo(() => groupByKey(list, "setup_id").filter((r) => r.totalTrades > 0), [list]);
-  const byNiveau = useMemo(() => groupByKey(list, "niveau_id").filter((r) => r.totalTrades > 0), [list]);
+  const bySetup = useMemo(() => groupByArrayKey(list, "setup_ids").filter((r) => r.totalTrades > 0), [list]);
+  const byNiveau = useMemo(() => groupByArrayKey(list, "niveau_ids").filter((r) => r.totalTrades > 0), [list]);
   const byEmotion = useMemo(() => groupByKey(list, "emotion").filter((r) => r.totalTrades > 0), [list]);
 
   const kRespect = useMemo(() => computeKPIs(list.filter((t) => t.respect_plan)), [list]);

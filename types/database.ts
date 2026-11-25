@@ -60,8 +60,10 @@ export type Trade = {
   taille_lots: number | null;
   resultat_r: number | null;
   resultat_usd: number | null;
-  setup_id: string | null;
-  niveau_id: string | null;
+  setup_id: string | null;        // 1er setup (compat) — source = setup_ids
+  niveau_id: string | null;       // 1er niveau (compat) — source = niveau_ids
+  setup_ids: string[];
+  niveau_ids: string[];
   setup_timeframes: Timeframe[];
   niveau_timeframes: Timeframe[];
   respect_plan: boolean;
@@ -119,6 +121,8 @@ type TradeInsert = {
   resultat_usd?: number | null;
   setup_id?: string | null;
   niveau_id?: string | null;
+  setup_ids?: string[];
+  niveau_ids?: string[];
   setup_timeframes?: Timeframe[];
   niveau_timeframes?: Timeframe[];
   respect_plan?: boolean;

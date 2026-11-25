@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImageDropzone } from "./image-dropzone";
-import { DynamicSelect } from "./dynamic-select";
+import { MultiDynamicSelect } from "./multi-dynamic-select";
 import { PartialExitsEditor } from "./partial-exits";
 import { autoLotSize, riskPctFromLots } from "@/lib/utils/pip-value";
 import { sessionFromHour } from "@/lib/utils/session-from-time";
@@ -40,8 +40,8 @@ const schema = z.object({
   resultat_r: z.number().nullable(),
   resultat_usd: z.number().nullable(),
 
-  setup_id: z.string().uuid().nullable(),
-  niveau_id: z.string().uuid().nullable(),
+  setup_ids: z.array(z.string().uuid()).default([]),
+  niveau_ids: z.array(z.string().uuid()).default([]),
   setup_timeframes: z.array(z.string()).default([]),
   niveau_timeframes: z.array(z.string()).default([]),
   respect_plan: z.boolean(),
@@ -102,8 +102,8 @@ const FIELD_LABELS: Record<string, string> = {
   taille_lots: "Taille (lots)",
   resultat_r: "Résultat (R)",
   resultat_usd: "Résultat ($)",
-  setup_id: "Setup",
-  niveau_id: "Niveau",
+  setup_ids: "Setups",
+  niveau_ids: "Niveaux",
   setup_timeframes: "Timeframes du setup",
   niveau_timeframes: "Timeframes du niveau",
   respect_plan: "Respect du plan",
@@ -155,8 +155,8 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
       taille_lots: initialTrade.taille_lots,
       resultat_r: initialTrade.resultat_r,
       resultat_usd: initialTrade.resultat_usd,
-      setup_id: initialTrade.setup_id,
-      niveau_id: initialTrade.niveau_id,
+      setup_ids: initialTrade.setup_ids?.length ? initialTrade.setup_ids : (initialTrade.setup_id ? [initialTrade.setup_id] : []),
+      niveau_ids: initialTrade.niveau_ids?.length ? initialTrade.niveau_ids : (initialTrade.niveau_id ? [initialTrade.niveau_id] : []),
       setup_timeframes: initialTrade.setup_timeframes ?? [],
       niveau_timeframes: initialTrade.niveau_timeframes ?? [],
       respect_plan: initialTrade.respect_plan,
@@ -177,8 +177,8 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
       taille_lots: null,
       resultat_r: null,
       resultat_usd: null,
-      setup_id: null,
-      niveau_id: null,
+      setup_ids: [],
+      niveau_ids: [],
       setup_timeframes: [],
       niveau_timeframes: [],
       respect_plan: true,
@@ -203,27 +203,29 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
   const prixEntree = watch("prix_entree");
   const stopLoss = watch("stop_loss");
   const dateEntree = watch("date_entree");
-  const setupId = watch("setup_id");
-  const niveauId = watch("niveau_id");
+  const setupIds = watch("setup_ids");
+  const niveauIds = watch("niveau_ids");
+  const firstSetupId = setupIds?.[0];
+  const firstNiveauId = niveauIds?.[0];
 
-  // 🔁 Pré-remplit les timeframes du trade avec ceux par défaut du setup choisi (si vide).
+  // 🔁 Pré-remplit les timeframes du trade avec ceux par défaut du 1er setup choisi (si vide).
   useEffect(() => {
     if (skipAuto.current) return;
-    if (!setupId) return;
-    const s = setups.find((x) => x.id === setupId);
+    if (!firstSetupId) return;
+    const s = setups.find((x) => x.id === firstSetupId);
     if (s?.timeframes?.length && (watch("setup_timeframes") ?? []).length === 0) {
       setValue("setup_timeframes", s.timeframes);
     }
-  }, [setupId, setups, setValue, watch]);
+  }, [firstSetupId, setups, setValue, watch]);
 
   useEffect(() => {
     if (skipAuto.current) return;
-    if (!niveauId) return;
-    const n = niveaux.find((x) => x.id === niveauId);
+    if (!firstNiveauId) return;
+    const n = niveaux.find((x) => x.id === firstNiveauId);
     if (n?.timeframes?.length && (watch("niveau_timeframes") ?? []).length === 0) {
       setValue("niveau_timeframes", n.timeframes);
     }
-  }, [niveauId, niveaux, setValue, watch]);
+  }, [firstNiveauId, niveaux, setValue, watch]);
 
   const compteCourant = useMemo(() => comptes.find((c) => c.id === compteId), [comptes, compteId]);
   const capitalCompte = compteCourant?.capital_initial ?? defaultCapital;
@@ -314,7 +316,14 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSubmitting(false); return toast.error("Non connecté"); }
 
-    const payload = { ...values, user_id: user.id, date_entree: new Date(values.date_entree).toISOString() };
+    const payload = {
+      ...values,
+      user_id: user.id,
+      date_entree: new Date(values.date_entree).toISOString(),
+      // Compat : setup_id / niveau_id = 1er élément des tableaux
+      setup_id: values.setup_ids[0] ?? null,
+      niveau_id: values.niveau_ids[0] ?? null,
+    };
     let trade: { id: string } | null = null;
     let error: { message: string } | null = null;
 
@@ -538,18 +547,18 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-1">
-              <Label>Setup / Modèle</Label>
-              <Controller name="setup_id" control={control} render={({ field }) => (
-                <DynamicSelect
+              <Label>Setup(s) / Modèle(s) <span className="text-[10px] text-muted-foreground">(plusieurs possibles)</span></Label>
+              <Controller name="setup_ids" control={control} render={({ field }) => (
+                <MultiDynamicSelect
                   table="setups"
                   label="Setup"
                   options={setups.map((s) => ({ id: s.id, nom: s.nom }))}
-                  value={field.value}
+                  value={field.value ?? []}
                   onChange={field.onChange}
                   onCreated={(opt) => setSetups((prev) => [...prev, { ...opt, user_id: "", description: null, timeframes: [], created_at: "" }])}
                 />
               )} />
-              {setupId && (
+              {setupIds?.length > 0 && (
                 <div className="pt-1">
                   <Label className="text-[11px] text-muted-foreground">Timeframe(s) du setup</Label>
                   <Controller name="setup_timeframes" control={control} render={({ field }) => (
@@ -559,18 +568,18 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
               )}
             </div>
             <div className="space-y-1">
-              <Label>Niveau / Zone clé</Label>
-              <Controller name="niveau_id" control={control} render={({ field }) => (
-                <DynamicSelect
+              <Label>Niveau(x) / Zone(s) clé <span className="text-[10px] text-muted-foreground">(plusieurs possibles)</span></Label>
+              <Controller name="niveau_ids" control={control} render={({ field }) => (
+                <MultiDynamicSelect
                   table="niveaux"
                   label="Niveau"
                   options={niveaux.map((n) => ({ id: n.id, nom: n.nom }))}
-                  value={field.value}
+                  value={field.value ?? []}
                   onChange={field.onChange}
                   onCreated={(opt) => setNiveaux((prev) => [...prev, { ...opt, user_id: "", description: null, timeframes: [], created_at: "" }])}
                 />
               )} />
-              {niveauId && (
+              {niveauIds?.length > 0 && (
                 <div className="pt-1">
                   <Label className="text-[11px] text-muted-foreground">Timeframe(s) du niveau</Label>
                   <Controller name="niveau_timeframes" control={control} render={({ field }) => (
