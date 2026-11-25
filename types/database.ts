@@ -1,6 +1,6 @@
 export type AccountType = "evaluation" | "prop_finance" | "reel" | "demo";
 export type AccountStatus = "actif" | "crame";
-export type Timeframe = "1m" | "5m" | "15m" | "30m" | "1h" | "4h" | "daily" | "weekly" | "monthly";
+export type Timeframe = "1m" | "3m" | "5m" | "15m" | "30m" | "1h" | "4h" | "daily" | "weekly" | "monthly";
 export type Direction = "long" | "short";
 export type Session = "asie" | "londres" | "ny" | "chevauchement_ldn_ny" | "hors_timing";
 export type Emotion = "calme" | "confiant" | "impatient" | "fomo" | "revenge" | "stresse";
