@@ -552,10 +552,10 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
                 <MultiDynamicSelect
                   table="setups"
                   label="Setup"
-                  options={setups.map((s) => ({ id: s.id, nom: s.nom }))}
+                  options={setups.map((s) => ({ id: s.id, nom: s.nom, archived: s.archived }))}
                   value={field.value ?? []}
                   onChange={field.onChange}
-                  onCreated={(opt) => setSetups((prev) => [...prev, { ...opt, user_id: "", description: null, timeframes: [], created_at: "" }])}
+                  onCreated={(opt) => setSetups((prev) => [...prev, { ...opt, user_id: "", description: null, timeframes: [], archived: false, created_at: "" }])}
                 />
               )} />
               {setupIds?.length > 0 && (
@@ -573,10 +573,10 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
                 <MultiDynamicSelect
                   table="niveaux"
                   label="Niveau"
-                  options={niveaux.map((n) => ({ id: n.id, nom: n.nom }))}
+                  options={niveaux.map((n) => ({ id: n.id, nom: n.nom, archived: n.archived }))}
                   value={field.value ?? []}
                   onChange={field.onChange}
-                  onCreated={(opt) => setNiveaux((prev) => [...prev, { ...opt, user_id: "", description: null, timeframes: [], created_at: "" }])}
+                  onCreated={(opt) => setNiveaux((prev) => [...prev, { ...opt, user_id: "", description: null, timeframes: [], archived: false, created_at: "" }])}
                 />
               )} />
               {niveauIds?.length > 0 && (

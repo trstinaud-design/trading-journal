@@ -25,6 +25,7 @@ export type Setup = {
   nom: string;
   description: string | null;
   timeframes: Timeframe[];
+  archived: boolean;
   created_at: string;
 };
 
@@ -34,6 +35,7 @@ export type Niveau = {
   nom: string;
   description: string | null;
   timeframes: Timeframe[];
+  archived: boolean;
   created_at: string;
 };
 
@@ -99,6 +101,7 @@ type SetupInsert = {
   nom: string;
   description?: string | null;
   timeframes?: Timeframe[];
+  archived?: boolean;
   created_at?: string;
 };
 type NiveauInsert = SetupInsert;

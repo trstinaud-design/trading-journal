@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
-type Option = { id: string; nom: string };
+type Option = { id: string; nom: string; archived?: boolean };
 type TableName = "setups" | "niveaux";
 
 type Props = {
@@ -30,7 +30,8 @@ export function MultiDynamicSelect({ table, options, value, onChange, onCreated,
   const [saving, setSaving] = useState(false);
 
   const selected = value ?? [];
-  const available = options.filter((o) => !selected.includes(o.id));
+  // Proposables : non sélectionnés ET non archivés. (archivés = toujours résolus pour les noms)
+  const available = options.filter((o) => !selected.includes(o.id) && !o.archived);
   const nameOf = (id: string) => options.find((o) => o.id === id)?.nom ?? "?";
 
   function add(id: string) {

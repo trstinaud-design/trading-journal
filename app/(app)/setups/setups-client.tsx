@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Plus, Trash2, ChevronRight } from "lucide-react";
+import { Plus, Trash2, ChevronRight, RotateCcw } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -56,15 +56,27 @@ function List({ table, title, items, onChange }: { table: "setups" | "niveaux"; 
     onChange();
   }
 
-  async function remove(id: string) {
-    if (!confirm("Supprimer ?")) return;
+  // Archive : retire de la liste/sélecteurs mais CONSERVE le nom sur les anciens trades.
+  async function archive(id: string, nom: string) {
+    if (!confirm(`Retirer "${nom}" de ta liste ?\n\nIl ne sera plus proposé pour les nouveaux trades, mais son nom RESTE affiché sur tes trades déjà enregistrés.`)) return;
     const supabase = createClient();
-    const { error } = await supabase.from(table).delete().eq("id", id);
+    const { error } = await supabase.from(table).update({ archived: true }).eq("id", id);
     if (error) return toast.error(error.message);
     onChange();
+    toast.success("Retiré de la liste (archivé)");
+  }
+
+  async function restore(id: string) {
+    const supabase = createClient();
+    const { error } = await supabase.from(table).update({ archived: false }).eq("id", id);
+    if (error) return toast.error(error.message);
+    onChange();
+    toast.success("Restauré");
   }
 
   const singular = table === "setups" ? "setup" : "niveau";
+  const actifs = items.filter((i) => !i.archived);
+  const archives = items.filter((i) => i.archived);
 
   return (
     <Card>
@@ -82,7 +94,7 @@ function List({ table, title, items, onChange }: { table: "setups" | "niveaux"; 
           </div>
         </div>
         <ul className="divide-y">
-          {items.map((it) => (
+          {actifs.map((it) => (
             <li key={it.id} className="space-y-1.5 py-2.5">
               <div className="flex items-center justify-between gap-2">
                 {table === "setups" ? (
@@ -96,12 +108,32 @@ function List({ table, title, items, onChange }: { table: "setups" | "niveaux"; 
                     {it.description && <p className="truncate text-xs text-muted-foreground">{it.description}</p>}
                   </div>
                 )}
-                <Button variant="ghost" size="icon" onClick={() => remove(it.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                <Button variant="ghost" size="icon" title="Retirer de la liste (archiver)" onClick={() => archive(it.id, it.nom)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
               </div>
               <TimeframePicker value={it.timeframes ?? []} onChange={(tfs) => updateTimeframes(it.id, tfs)} size="sm" />
             </li>
           ))}
+          {actifs.length === 0 && <li className="py-3 text-sm text-muted-foreground">Aucun {singular} actif.</li>}
         </ul>
+
+        {/* Archivés : conservés pour l'affichage sur les anciens trades */}
+        {archives.length > 0 && (
+          <details className="rounded-lg border border-border/50 p-2">
+            <summary className="cursor-pointer text-xs font-medium text-muted-foreground">
+              Archivés ({archives.length}) — toujours visibles sur tes anciens trades
+            </summary>
+            <ul className="mt-2 divide-y">
+              {archives.map((it) => (
+                <li key={it.id} className="flex items-center justify-between gap-2 py-2">
+                  <span className="truncate text-sm text-muted-foreground line-through">{it.nom}</span>
+                  <Button variant="ghost" size="sm" className="h-7 gap-1 text-xs text-emerald-400" onClick={() => restore(it.id)}>
+                    <RotateCcw className="h-3 w-3" /> Restaurer
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
       </CardContent>
     </Card>
   );
