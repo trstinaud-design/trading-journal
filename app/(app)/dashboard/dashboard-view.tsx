@@ -27,17 +27,34 @@ type Props = {
   niveaux: Pick<Niveau, "id" | "nom">[];
 };
 
+const MONTHS_FR = ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"];
+
 export function DashboardView({ trades, comptes, setups, niveaux }: Props) {
   const [account, setAccount] = useState<string>("all");
+  const [year, setYear] = useState<string>("all");   // "all" | "2026"...
+  const [month, setMonth] = useState<string>("all");  // "all" | "0".."11"
 
   const setupLabels = useMemo(() => Object.fromEntries(setups.map((s) => [s.id, s.nom])), [setups]);
   const niveauLabels = useMemo(() => Object.fromEntries(niveaux.map((n) => [n.id, n.nom])), [niveaux]);
 
-  // Filtre par compte sélectionné
-  const list = useMemo(
-    () => (account === "all" ? trades : trades.filter((t) => t.compte_id === account)),
-    [trades, account],
+  // Années présentes dans les trades (desc)
+  const years = useMemo(
+    () => [...new Set(trades.map((t) => new Date(t.date_entree).getFullYear()))].sort((a, b) => b - a),
+    [trades],
   );
+
+  // Filtre par compte + année + mois
+  const list = useMemo(() => trades.filter((t) => {
+    if (account !== "all" && t.compte_id !== account) return false;
+    const d = new Date(t.date_entree);
+    if (year !== "all" && d.getFullYear() !== Number(year)) return false;
+    if (month !== "all" && d.getMonth() !== Number(month)) return false;
+    return true;
+  }), [trades, account, year, month]);
+
+  const periodLabel = year === "all"
+    ? (month === "all" ? "Depuis le début" : `${MONTHS_FR[Number(month)]} (toutes années)`)
+    : (month === "all" ? `Année ${year}` : `${MONTHS_FR[Number(month)]} ${year}`);
 
   const k = useMemo(() => computeKPIs(list), [list]);
   const equity = useMemo(() => equityCurveR(list), [list]);
@@ -71,17 +88,30 @@ export function DashboardView({ trades, comptes, setups, niveaux }: Props) {
         <div>
           <h1 className="bg-gradient-to-r from-foreground to-foreground/60 bg-clip-text text-3xl font-bold">Dashboard</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {list.length} trade{list.length > 1 ? "s" : ""}
+            {list.length} trade{list.length > 1 ? "s" : ""} · {periodLabel}
             {account !== "all" && selectedCompte && <> · {selectedCompte.nom}</>}
-            {capitalInitial > 0 && <> · capital {capitalInitial.toLocaleString()}$</>}
           </p>
         </div>
 
-        {/* Sélecteur de compte */}
-        <div className="flex items-center gap-2">
+        {/* Sélecteurs : Année · Mois · Compte */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={year} onValueChange={setYear}>
+            <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">📅 Toutes années</SelectItem>
+              {years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={month} onValueChange={setMonth}>
+            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les mois</SelectItem>
+              {MONTHS_FR.map((m, i) => <SelectItem key={i} value={String(i)}>{m}</SelectItem>)}
+            </SelectContent>
+          </Select>
           <Wallet className="h-4 w-4 text-muted-foreground" />
           <Select value={account} onValueChange={setAccount}>
-            <SelectTrigger className="w-56"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-52"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">🌐 Tous les comptes ({comptes.length})</SelectItem>
               {comptes.map((c) => (
