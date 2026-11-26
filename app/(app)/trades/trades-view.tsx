@@ -62,6 +62,7 @@ export function TradesView({
   const [setupId, setSetupId] = useState<string>("all");
   const [emotion, setEmotion] = useState<string>("all");
   const [statut, setStatut] = useState<string>("all");
+  const [compte, setCompte] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
   const [sort, setSort] = useState<SortKey>("date_desc");
@@ -77,6 +78,12 @@ export function TradesView({
   const distinctPairs = useMemo(() => [...new Set(trades.map((t) => t.paire))].sort(), [trades]);
   const distinctEmotions = useMemo(() => [...new Set(trades.map((t) => t.emotion).filter(Boolean) as string[])].sort(), [trades]);
   const distinctSessions = useMemo(() => [...new Set(trades.map((t) => t.session).filter(Boolean) as string[])].sort(), [trades]);
+  // Comptes présents dans les trades (id → nom)
+  const distinctComptes = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const t of trades) if (t.compte_id) m.set(t.compte_id, t.comptes?.nom ?? "Compte");
+    return [...m.entries()];
+  }, [trades]);
 
   const filtered = useMemo(() => {
     let list = trades;
@@ -87,6 +94,7 @@ export function TradesView({
     if (setupId !== "all") list = list.filter((t) => (t.setup_ids?.length ? t.setup_ids.includes(setupId) : t.setup_id === setupId));
     if (emotion !== "all") list = list.filter((t) => t.emotion === emotion);
     if (statut !== "all") list = list.filter((t) => t.statut === statut);
+    if (compte !== "all") list = list.filter((t) => t.compte_id === compte);
     if (dateFrom) list = list.filter((t) => t.date_entree >= dateFrom);
     if (dateTo) list = list.filter((t) => t.date_entree <= dateTo + "T23:59:59");
 
@@ -98,7 +106,7 @@ export function TradesView({
     if (sort === "r_asc") list.sort((a, b) => (a.resultat_r ?? 0) - (b.resultat_r ?? 0));
 
     return list;
-  }, [trades, tab, pair, session, direction, setupId, emotion, statut, dateFrom, dateTo, sort]);
+  }, [trades, tab, pair, session, direction, setupId, emotion, statut, compte, dateFrom, dateTo, sort]);
 
   // Compteurs par onglet
   const tabCounts = useMemo(() => ({
@@ -111,11 +119,11 @@ export function TradesView({
   const activeFilters =
     (pair !== "all" ? 1 : 0) + (session !== "all" ? 1 : 0) + (direction !== "all" ? 1 : 0) +
     (setupId !== "all" ? 1 : 0) + (emotion !== "all" ? 1 : 0) + (statut !== "all" ? 1 : 0) +
-    (dateFrom ? 1 : 0) + (dateTo ? 1 : 0);
+    (compte !== "all" ? 1 : 0) + (dateFrom ? 1 : 0) + (dateTo ? 1 : 0);
 
   function resetFilters() {
     setPair("all"); setSession("all"); setDirection("all"); setSetupId("all");
-    setEmotion("all"); setStatut("all"); setDateFrom(""); setDateTo("");
+    setEmotion("all"); setStatut("all"); setCompte("all"); setDateFrom(""); setDateTo("");
   }
 
   // Lightbox pour voir les images d'un trade directement depuis la liste
@@ -185,6 +193,7 @@ export function TradesView({
         <ChipSelect label="Setup" value={setupId} onChange={setSetupId} options={[["all", "Tous"], ...setups.map((s) => [s.id, s.nom] as [string, string])]} />
         <ChipSelect label="Émotion" value={emotion} onChange={setEmotion} options={[["all", "Toutes"], ...distinctEmotions.map((e) => [e, emotionLabel(e)] as [string, string])]} />
         <ChipSelect label="Statut" value={statut} onChange={setStatut} options={[["all", "Tous"], ["tp", "WIN"], ["sl", "LOSS"], ["be", "BE"], ["manuel", "MANUEL"]]} />
+        <ChipSelect label="Compte" value={compte} onChange={setCompte} options={[["all", "Tous"], ...distinctComptes.map(([id, nom]) => [id, nom] as [string, string])]} />
 
         <div className="flex items-center gap-1">
           <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="h-8 w-32 text-xs" />
