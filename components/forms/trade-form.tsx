@@ -487,12 +487,12 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
               <Input type="number" step="any" className={errCls("prix_entree")} {...register("prix_entree", { setValueAs: (v) => v === "" ? null : Number(v) })} />
             </div>
             <div className="space-y-1">
-              <Label>Stop Loss</Label>
-              <Input type="number" step="any" className={errCls("stop_loss")} {...register("stop_loss", { setValueAs: (v) => v === "" ? null : Number(v) })} />
-            </div>
-            <div className="space-y-1">
               <Label>Take Profit</Label>
               <Input type="number" step="any" className={errCls("take_profit")} {...register("take_profit", { setValueAs: (v) => v === "" ? null : Number(v) })} />
+            </div>
+            <div className="space-y-1">
+              <Label>Stop Loss</Label>
+              <Input type="number" step="any" className={errCls("stop_loss")} {...register("stop_loss", { setValueAs: (v) => v === "" ? null : Number(v) })} />
             </div>
             <div className="space-y-1">
               <Label>Statut</Label>
@@ -547,27 +547,6 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-1">
-              <Label>Setup(s) / Modèle(s) <span className="text-[10px] text-muted-foreground">(plusieurs possibles)</span></Label>
-              <Controller name="setup_ids" control={control} render={({ field }) => (
-                <MultiDynamicSelect
-                  table="setups"
-                  label="Setup"
-                  options={setups.map((s) => ({ id: s.id, nom: s.nom, archived: s.archived }))}
-                  value={field.value ?? []}
-                  onChange={field.onChange}
-                  onCreated={(opt) => setSetups((prev) => [...prev, { ...opt, user_id: "", description: null, timeframes: [], archived: false, created_at: "" }])}
-                />
-              )} />
-              {setupIds?.length > 0 && (
-                <div className="pt-1">
-                  <Label className="text-[11px] text-muted-foreground">Timeframe(s) du setup</Label>
-                  <Controller name="setup_timeframes" control={control} render={({ field }) => (
-                    <TimeframePicker value={(field.value ?? []) as Timeframe[]} onChange={field.onChange} size="sm" />
-                  )} />
-                </div>
-              )}
-            </div>
-            <div className="space-y-1">
               <Label>Niveau(x) / Zone(s) clé <span className="text-[10px] text-muted-foreground">(plusieurs possibles)</span></Label>
               <Controller name="niveau_ids" control={control} render={({ field }) => (
                 <MultiDynamicSelect
@@ -583,6 +562,27 @@ export function TradeForm({ comptes, setups: initialSetups, niveaux: initialNive
                 <div className="pt-1">
                   <Label className="text-[11px] text-muted-foreground">Timeframe(s) du niveau</Label>
                   <Controller name="niveau_timeframes" control={control} render={({ field }) => (
+                    <TimeframePicker value={(field.value ?? []) as Timeframe[]} onChange={field.onChange} size="sm" />
+                  )} />
+                </div>
+              )}
+            </div>
+            <div className="space-y-1">
+              <Label>Setup(s) / Modèle(s) <span className="text-[10px] text-muted-foreground">(plusieurs possibles)</span></Label>
+              <Controller name="setup_ids" control={control} render={({ field }) => (
+                <MultiDynamicSelect
+                  table="setups"
+                  label="Setup"
+                  options={setups.map((s) => ({ id: s.id, nom: s.nom, archived: s.archived }))}
+                  value={field.value ?? []}
+                  onChange={field.onChange}
+                  onCreated={(opt) => setSetups((prev) => [...prev, { ...opt, user_id: "", description: null, timeframes: [], archived: false, created_at: "" }])}
+                />
+              )} />
+              {setupIds?.length > 0 && (
+                <div className="pt-1">
+                  <Label className="text-[11px] text-muted-foreground">Timeframe(s) du setup</Label>
+                  <Controller name="setup_timeframes" control={control} render={({ field }) => (
                     <TimeframePicker value={(field.value ?? []) as Timeframe[]} onChange={field.onChange} size="sm" />
                   )} />
                 </div>
