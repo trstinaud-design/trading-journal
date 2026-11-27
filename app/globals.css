@@ -10,6 +10,10 @@
 
 @layer base {
   :root {
+    /* Polices (chargées via <link> dans le layout) */
+    --font-sans: "Archivo", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    --font-display: "Archivo Black", "Archivo", sans-serif;
+
     /* Mode clair : papier millimétré froid (pas un cream chaud) */
     --background: 196 24% 97%;
     --foreground: 196 34% 11%;
