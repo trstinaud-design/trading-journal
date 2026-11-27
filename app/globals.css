@@ -77,6 +77,70 @@
     letter-spacing: -0.006em;
   }
 
+  /* ---- Police d'affichage sélectionnable (Paramètres › Apparence) ---- */
+  [data-font="marker"]   { --font-display: "Permanent Marker", cursive; }
+  [data-font="sedgwick"] { --font-display: "Sedgwick Ave Display", cursive; }
+  [data-font="spray"]    { --font-display: "Rubik Spray Paint", system-ui, sans-serif; }
+  [data-font="bungee"]   { --font-display: "Bungee", sans-serif; }
+  [data-font="bangers"]  { --font-display: "Bangers", cursive; }
+  [data-font="barrio"]   { --font-display: "Barrio", cursive; }
+  [data-font="protest"]  { --font-display: "Protest Guerrilla", sans-serif; }
+  [data-font="rocksalt"] { --font-display: "Rock Salt", cursive; }
+
+  /* ---- Fonds sélectionnables : couches posées sur le body ---- */
+  body::before, body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+  }
+  /* Défaut (pétrole) : halo laiton + lueur viridian */
+  body::before {
+    background:
+      radial-gradient(60% 42% at 50% -8%, hsl(var(--primary) / 0.10), transparent 70%),
+      radial-gradient(45% 40% at 100% 108%, hsl(var(--win) / 0.07), transparent 70%);
+  }
+  body::after {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.035;
+    mix-blend-mode: overlay;
+  }
+
+  /* Nuit froide */
+  html[data-bg="nuit"] body { background-color: hsl(222 34% 4%); }
+  html[data-bg="nuit"] body::before {
+    background: radial-gradient(70% 55% at 50% -10%, hsl(214 60% 22% / 0.45), transparent 70%);
+  }
+
+  /* Ambre chaud */
+  html[data-bg="ambre"] body { background-color: hsl(26 28% 6%); }
+  html[data-bg="ambre"] body::before {
+    background:
+      radial-gradient(60% 45% at 50% -8%, hsl(32 80% 40% / 0.14), transparent 70%),
+      radial-gradient(45% 40% at 0% 108%, hsl(8 70% 45% / 0.10), transparent 70%);
+  }
+
+  /* Cosmos : nébuleuses + étoiles (pur CSS, pas d'image externe) */
+  html[data-bg="cosmos"] body { background-color: #05060c; }
+  html[data-bg="cosmos"] body::before {
+    background:
+      radial-gradient(38% 30% at 18% 26%, rgba(124, 58, 237, 0.30), transparent 60%),
+      radial-gradient(42% 32% at 82% 18%, rgba(14, 165, 233, 0.24), transparent 60%),
+      radial-gradient(46% 36% at 62% 84%, rgba(236, 72, 153, 0.18), transparent 60%);
+  }
+  html[data-bg="cosmos"] body::after {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cg fill='white'%3E%3Ccircle cx='24' cy='40' r='0.9' opacity='0.9'/%3E%3Ccircle cx='90' cy='20' r='0.6' opacity='0.6'/%3E%3Ccircle cx='160' cy='70' r='1.1' opacity='0.95'/%3E%3Ccircle cx='220' cy='30' r='0.5' opacity='0.5'/%3E%3Ccircle cx='270' cy='90' r='0.8' opacity='0.8'/%3E%3Ccircle cx='40' cy='120' r='0.6' opacity='0.6'/%3E%3Ccircle cx='120' cy='150' r='1' opacity='0.9'/%3E%3Ccircle cx='200' cy='130' r='0.6' opacity='0.6'/%3E%3Ccircle cx='260' cy='180' r='0.9' opacity='0.85'/%3E%3Ccircle cx='30' cy='210' r='0.7' opacity='0.7'/%3E%3Ccircle cx='100' cy='250' r='0.5' opacity='0.5'/%3E%3Ccircle cx='170' cy='220' r='1' opacity='0.9'/%3E%3Ccircle cx='240' cy='260' r='0.6' opacity='0.6'/%3E%3Ccircle cx='285' cy='230' r='0.8' opacity='0.8'/%3E%3Ccircle cx='60' cy='75' r='0.5' opacity='0.5'/%3E%3Ccircle cx='140' cy='40' r='0.7' opacity='0.7'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 300px 300px;
+    opacity: 0.9;
+    mix-blend-mode: normal;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html[data-bg="cosmos"] body::after { animation: twinkle 6s ease-in-out infinite; }
+    @keyframes twinkle { 0%, 100% { opacity: 0.55; } 50% { opacity: 0.95; } }
+  }
+
   /* Titres : largeur étendue (readout d'instrument) */
   h1, h2, h3 { letter-spacing: -0.02em; }
 

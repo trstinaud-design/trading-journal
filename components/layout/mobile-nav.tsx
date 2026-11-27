@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Plus, ListChecks, Images, Settings, LogOut, Menu, X, Sparkles, Wallet } from "lucide-react";
+import { LayoutDashboard, Plus, ListChecks, Images, Settings, LogOut, Menu, X, Sparkles, Wallet, Palette } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ const links = [
   { href: "/gallery", label: "Galerie", icon: Images },
   { href: "/comptes", label: "Comptes", icon: Wallet },
   { href: "/setups", label: "Setups & Niveaux", icon: Settings },
+  { href: "/parametres", label: "Apparence", icon: Palette },
 ];
 
 /** Top-bar mobile avec drawer sidebar. Visible < lg. */

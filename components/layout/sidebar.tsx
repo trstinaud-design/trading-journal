@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Plus, ListChecks, Images, Settings, LogOut, Sparkles, Wallet } from "lucide-react";
+import { LayoutDashboard, Plus, ListChecks, Images, Settings, LogOut, Sparkles, Wallet, Palette } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ const links = [
   { href: "/gallery", label: "Galerie", icon: Images },
   { href: "/comptes", label: "Comptes", icon: Wallet },
   { href: "/setups", label: "Setups & Niveaux", icon: Settings },
+  { href: "/parametres", label: "Apparence", icon: Palette },
 ];
 
 export function Sidebar({ email }: { email: string | null }) {

@@ -7,12 +7,14 @@ export const metadata: Metadata = {
   description: "Le registre de précision de ton trading : performance, discipline, patterns.",
 };
 
-// Applique le thème avant le premier rendu (évite le flash clair → sombre).
+// Applique thème + police + fond avant le premier rendu (évite le flash).
 const themeInitScript = `
   try {
-    const stored = localStorage.getItem("theme");
-    const dark = stored === "dark" || (stored === null);
-    document.documentElement.classList.toggle("dark", dark);
+    var el = document.documentElement;
+    var stored = localStorage.getItem("theme");
+    el.classList.toggle("dark", stored === "dark" || stored === null);
+    var f = localStorage.getItem("font"); if (f) el.dataset.font = f;
+    var b = localStorage.getItem("bg"); if (b) el.dataset.bg = b;
   } catch (_) {}
 `;
 
@@ -25,7 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
-          href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Black&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Black&family=Permanent+Marker&family=Sedgwick+Ave+Display&family=Rubik+Spray+Paint&family=Bungee&family=Bangers&family=Barrio&family=Protest+Guerrilla&family=Rock+Salt&display=swap"
           rel="stylesheet"
         />
       </head>
