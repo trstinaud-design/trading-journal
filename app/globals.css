@@ -141,8 +141,9 @@
     @keyframes twinkle { 0%, 100% { opacity: 0.55; } 50% { opacity: 0.95; } }
   }
 
-  /* Titres : largeur étendue (readout d'instrument) */
-  h1, h2, h3 { letter-spacing: -0.02em; }
+  /* Titres de page (h1) : suivent la police d'affichage choisie dans Apparence */
+  h1 { font-family: var(--font-display); letter-spacing: normal; }
+  h2, h3 { letter-spacing: -0.02em; }
 
   /* Chiffres alignés par défaut partout où c'est une donnée */
   .tabular-nums, [class*="tabular"] { font-variant-numeric: tabular-nums; }
