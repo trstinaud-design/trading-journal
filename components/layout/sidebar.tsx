@@ -58,7 +58,7 @@ export function Sidebar({ email }: { email: string | null }) {
               )}
             >
               <Icon className={cn("h-4 w-4 transition-transform duration-300", highlight && !active && "text-primary group-hover:scale-110", active && "scale-110")} />
-              {label}
+              <span className="font-display">{label}</span>
               {highlight && !active && (
                 <span className="ml-auto text-[10px] font-semibold uppercase text-primary/70">Nouveau</span>
               )}

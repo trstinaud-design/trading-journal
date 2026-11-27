@@ -96,7 +96,7 @@ export function MobileNav({ email }: { email: string | null }) {
                     )}
                   >
                     <Icon className="h-4 w-4" />
-                    {label}
+                    <span className="font-display">{label}</span>
                   </Link>
                 );
               })}
