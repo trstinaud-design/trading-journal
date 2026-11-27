@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Plus, ListChecks, Images, Settings, LogOut, TrendingUp, Sparkles, Wallet } from "lucide-react";
+import { LayoutDashboard, Plus, ListChecks, Images, Settings, LogOut, Sparkles, Wallet } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
@@ -31,11 +31,11 @@ export function Sidebar({ email }: { email: string | null }) {
   return (
     <aside className="sticky top-0 flex h-screen w-64 flex-col border-r liquid-glass p-4">
       <div className="mb-8 flex items-center gap-2.5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-gold glow-gold">
-          <TrendingUp className="h-5 w-5 text-slate-900" />
+        <div className="flex h-9 w-9 items-center justify-center rounded-md gradient-gold">
+          <span className="font-display text-sm font-extrabold text-[hsl(192_40%_8%)]">◆</span>
         </div>
         <div className="min-w-0">
-          <h1 className="text-sm font-semibold leading-tight">Trading Journal</h1>
+          <h1 className="font-display text-sm font-bold leading-tight tracking-tight">Instrument</h1>
           <p className="truncate text-[11px] text-muted-foreground">{email}</p>
         </div>
       </div>

@@ -10,12 +10,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="relative flex min-h-screen flex-col lg:flex-row">
-      {/* Aurora décorative : révèle l'effet verre de la navbar */}
-      <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute -left-40 top-0 h-[32rem] w-[32rem] rounded-full bg-primary/20 blur-[120px]" />
-        <div className="absolute left-1/3 -top-20 h-[28rem] w-[28rem] rounded-full bg-[hsl(var(--gold))]/10 blur-[120px]" />
-        <div className="absolute bottom-0 right-0 h-[30rem] w-[30rem] rounded-full bg-emerald-500/10 blur-[120px]" />
-      </div>
+      {/* Fond papier millimétré discret — une seule teinte laiton qui descend du haut */}
+      <div aria-hidden className="instrument-grid pointer-events-none fixed inset-0 -z-10" />
+      <div aria-hidden className="pointer-events-none fixed inset-x-0 top-0 -z-10 h-64 bg-[radial-gradient(ellipse_60%_100%_at_50%_0%,hsl(var(--primary)/0.06),transparent)]" />
 
       <div className="hidden lg:block">
         <Sidebar email={user.email ?? null} />

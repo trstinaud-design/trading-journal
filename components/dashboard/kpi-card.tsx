@@ -13,35 +13,35 @@ type Props = {
 
 export function KPICard({ label, value, hint, tone = "default", icon: Icon, trend }: Props) {
   const color =
-    tone === "win" ? "text-emerald-400" :
-    tone === "loss" ? "text-rose-400" :
-    tone === "neutral" ? "text-muted-foreground" : "";
+    tone === "win" ? "text-[hsl(var(--win))]" :
+    tone === "loss" ? "text-[hsl(var(--loss))]" :
+    tone === "neutral" ? "text-muted-foreground" : "text-foreground";
 
   const iconBg =
-    tone === "win" ? "bg-emerald-500/10 text-emerald-400" :
-    tone === "loss" ? "bg-rose-500/10 text-rose-400" :
+    tone === "win" ? "bg-[hsl(var(--win))]/10 text-[hsl(var(--win))]" :
+    tone === "loss" ? "bg-[hsl(var(--loss))]/10 text-[hsl(var(--loss))]" :
     tone === "neutral" ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary";
 
   const TrendIcon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
 
   return (
-    <Card className="card-glass overflow-hidden transition-all hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5">
+    <Card className="card-glass overflow-hidden transition-colors hover:border-primary/40">
       <CardContent className="p-5">
         <div className="mb-3 flex items-center justify-between">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</p>
+          <p className="text-[13px] font-medium text-muted-foreground">{label}</p>
           {Icon && (
-            <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", iconBg)}>
-              <Icon className="h-4 w-4" />
+            <div className={cn("flex h-7 w-7 items-center justify-center rounded-md border border-border/60", iconBg)}>
+              <Icon className="h-3.5 w-3.5" />
             </div>
           )}
         </div>
         <div className="flex items-baseline gap-2">
-          <p className={cn("text-3xl font-bold tabular-nums leading-none", color)}>{value}</p>
+          <p className={cn("font-display text-[1.9rem] font-bold leading-none tabular-nums", color)}>{value}</p>
           {trend && (
-            <TrendIcon className={cn("h-4 w-4", trend === "up" ? "text-emerald-400" : trend === "down" ? "text-rose-400" : "text-muted-foreground")} />
+            <TrendIcon className={cn("h-4 w-4", trend === "up" ? "text-[hsl(var(--win))]" : trend === "down" ? "text-[hsl(var(--loss))]" : "text-muted-foreground")} />
           )}
         </div>
-        {hint && <p className="mt-2 text-xs text-muted-foreground">{hint}</p>}
+        {hint && <p className="mt-2 text-xs text-muted-foreground tabular-nums">{hint}</p>}
       </CardContent>
     </Card>
   );

@@ -2,102 +2,131 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =====================================================================
+   « Instrument » — encre pétrole + laiton. Palette d'un instrument de
+   précision financier. Les tokens pilotent toute l'app ; les noms de
+   classes utilitaires sont conservés pour compatibilité.
+   ===================================================================== */
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    /* Mode clair : papier millimétré froid (pas un cream chaud) */
+    --background: 196 24% 97%;
+    --foreground: 196 34% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 196 34% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 250 84% 62%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 250 84% 62%;
-    --radius: 0.75rem;
-    --win: 152 76% 46%;
-    --loss: 350 80% 60%;
-    --neutral: 240 4% 60%;
-    --gold: 43 90% 55%;
-    --gold-fg: 43 100% 92%;
+    --popover-foreground: 196 34% 11%;
+    --primary: 34 74% 42%;              /* laiton foncé lisible sur clair */
+    --primary-foreground: 40 90% 97%;
+    --secondary: 196 18% 93%;
+    --secondary-foreground: 196 30% 14%;
+    --muted: 196 18% 93%;
+    --muted-foreground: 196 10% 40%;
+    --accent: 196 20% 91%;
+    --accent-foreground: 196 30% 14%;
+    --destructive: 6 70% 48%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 196 16% 87%;
+    --input: 196 16% 85%;
+    --ring: 34 74% 46%;
+    --radius: 0.5rem;
+    --win: 158 64% 34%;
+    --loss: 6 68% 48%;
+    --neutral: 196 8% 55%;
+    --gold: 34 74% 44%;
+    --gold-fg: 36 60% 24%;
   }
 
   .dark {
-    --background: 240 15% 4%;
-    --foreground: 0 0% 98%;
-    --card: 240 12% 7%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 12% 7%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 250 90% 68%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 8% 12%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 8% 12%;
-    --muted-foreground: 240 5% 65%;
-    --accent: 240 8% 14%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 50%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 8% 14%;
-    --input: 240 8% 14%;
-    --ring: 250 90% 68%;
-    --win: 152 76% 50%;
-    --loss: 350 90% 65%;
-    --neutral: 240 4% 46%;
-    --gold: 43 95% 60%;
-    --gold-fg: 43 100% 95%;
+    /* Mode sombre (défaut) : encre pétrole, teintée cyan profond */
+    --background: 192 34% 5%;
+    --foreground: 170 14% 91%;
+    --card: 192 24% 8%;
+    --card-foreground: 170 14% 91%;
+    --popover: 192 24% 9%;
+    --popover-foreground: 170 14% 91%;
+    --primary: 40 74% 56%;              /* laiton — l'unique accent fort */
+    --primary-foreground: 192 40% 6%;
+    --secondary: 192 18% 13%;
+    --secondary-foreground: 170 14% 91%;
+    --muted: 192 18% 13%;
+    --muted-foreground: 185 10% 56%;
+    --accent: 192 20% 14%;
+    --accent-foreground: 170 14% 91%;
+    --destructive: 6 66% 52%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 192 16% 15%;
+    --input: 192 16% 17%;
+    --ring: 40 74% 56%;
+    --win: 158 58% 46%;
+    --loss: 6 70% 57%;
+    --neutral: 185 8% 50%;
+    --gold: 40 78% 58%;
+    --gold-fg: 192 40% 8%;
   }
 
   * { @apply border-border; }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-feature-settings: "ss01", "cv01";
+    letter-spacing: -0.006em;
+  }
+
+  /* Titres : largeur étendue (readout d'instrument) */
+  h1, h2, h3 { letter-spacing: -0.02em; }
+
+  /* Chiffres alignés par défaut partout où c'est une donnée */
+  .tabular-nums, [class*="tabular"] { font-variant-numeric: tabular-nums; }
+
+  /* Focus clavier visible, en laiton */
+  :where(a, button, [role="button"], input, select, textarea):focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
   }
 }
 
 @layer utilities {
+  .font-display { font-family: var(--font-display), var(--font-sans), sans-serif; }
+
+  /* Boutons primaires : laiton profond (bronze) → texte clair lisible */
   .gradient-primary {
-    background: linear-gradient(135deg, hsl(250, 90%, 68%) 0%, hsl(280, 85%, 65%) 100%);
+    background: linear-gradient(135deg, hsl(36 72% 46%) 0%, hsl(26 74% 36%) 100%);
   }
   .gradient-win {
-    background: linear-gradient(135deg, hsl(152, 76%, 50%) 0%, hsl(170, 76%, 45%) 100%);
+    background: linear-gradient(135deg, hsl(158 60% 42%) 0%, hsl(168 60% 34%) 100%);
   }
   .gradient-loss {
-    background: linear-gradient(135deg, hsl(350, 90%, 65%) 0%, hsl(15, 85%, 60%) 100%);
+    background: linear-gradient(135deg, hsl(6 70% 54%) 0%, hsl(14 74% 46%) 100%);
   }
+  /* Logo / héros : laiton brillant, icône foncée */
   .gradient-gold {
-    background: linear-gradient(135deg, hsl(45, 95%, 65%) 0%, hsl(30, 90%, 55%) 100%);
+    background: linear-gradient(135deg, hsl(44 86% 64%) 0%, hsl(34 82% 50%) 100%);
   }
-  .text-gold {
-    color: hsl(var(--gold));
-  }
-  .glow-gold {
-    box-shadow: 0 0 40px -10px hsl(var(--gold) / 0.5);
-  }
+  .text-gold { color: hsl(var(--gold)); }
+  .glow-gold { box-shadow: 0 0 36px -14px hsl(var(--gold) / 0.55); }
+  .glow-primary { box-shadow: 0 0 36px -14px hsl(var(--primary) / 0.5); }
+
+  /* Panneau : surface plate, filet 1px, léger reflet interne — pas d'ombre grise SaaS */
   .card-glass {
-    background: linear-gradient(180deg, hsl(240, 12%, 8%) 0%, hsl(240, 15%, 5%) 100%);
-    border: 1px solid hsl(240, 8%, 16%);
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    box-shadow: inset 0 1px 0 hsl(170 20% 90% / 0.03);
   }
-  .glow-primary {
-    box-shadow: 0 0 40px -10px hsl(250, 90%, 68% / 0.4);
+  :root:not(.dark) .card-glass {
+    box-shadow: inset 0 1px 0 hsl(0 0% 100% / 0.6), 0 1px 2px hsl(196 30% 20% / 0.04);
   }
 
-  /* Navbar liquid glass : verre dépoli, translucide, reflet subtil */
+  /* Navbar : verre encre, translucide, filet froid */
   .liquid-glass {
-    background: linear-gradient(180deg, hsl(240 15% 10% / 0.72) 0%, hsl(240 18% 6% / 0.72) 100%);
-    backdrop-filter: blur(18px) saturate(160%);
-    -webkit-backdrop-filter: blur(18px) saturate(160%);
-    border-color: hsl(0 0% 100% / 0.07);
+    background: hsl(192 30% 6% / 0.78);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border-color: hsl(180 30% 70% / 0.08);
     position: relative;
   }
   .liquid-glass::before {
@@ -105,26 +134,33 @@
     position: absolute;
     inset: 0;
     pointer-events: none;
-    background: linear-gradient(135deg, hsl(0 0% 100% / 0.06) 0%, transparent 40%);
+    background: linear-gradient(150deg, hsl(180 40% 70% / 0.04) 0%, transparent 38%);
   }
   :root:not(.dark) .liquid-glass {
-    background: linear-gradient(180deg, hsl(0 0% 100% / 0.75) 0%, hsl(240 20% 97% / 0.75) 100%);
-    border-color: hsl(240 10% 50% / 0.12);
+    background: hsl(196 30% 99% / 0.82);
+    border-color: hsl(196 20% 50% / 0.14);
   }
-  /* Indicateur actif qui glisse */
-  .nav-active {
-    position: relative;
-  }
+
+  /* Indicateur de nav actif : filet laiton à gauche */
+  .nav-active { position: relative; }
   .nav-active::before {
     content: "";
     position: absolute;
-    left: 0;
-    top: 50%;
+    left: 0; top: 50%;
     transform: translateY(-50%);
-    height: 60%;
-    width: 3px;
-    border-radius: 0 3px 3px 0;
+    height: 62%; width: 2px;
+    border-radius: 0 2px 2px 0;
     background: hsl(var(--primary));
-    box-shadow: 0 0 12px hsl(var(--primary) / 0.6);
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.7);
+  }
+
+  /* Fond « papier millimétré » discret pour la zone principale */
+  .instrument-grid {
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.5) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.5) 1px, transparent 1px);
+    background-size: 48px 48px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 30%, transparent 75%);
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 30%, transparent 75%);
   }
 }

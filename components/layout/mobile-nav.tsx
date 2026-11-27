@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Plus, ListChecks, Images, Settings, LogOut, TrendingUp, Menu, X, Sparkles, Wallet } from "lucide-react";
+import { LayoutDashboard, Plus, ListChecks, Images, Settings, LogOut, Menu, X, Sparkles, Wallet } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
@@ -44,8 +44,8 @@ export function MobileNav({ email }: { email: string | null }) {
       {/* Top bar mobile */}
       <div className="sticky top-0 z-40 flex items-center justify-between border-b liquid-glass px-4 py-3 lg:hidden">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg gradient-gold"><TrendingUp className="h-4 w-4 text-slate-900" /></div>
-          <span className="text-sm font-semibold">Trading Journal</span>
+          <div className="flex h-8 w-8 items-center justify-center rounded-md gradient-gold"><span className="font-display text-xs font-extrabold text-[hsl(192_40%_8%)]">◆</span></div>
+          <span className="font-display text-sm font-bold tracking-tight">Instrument</span>
         </div>
         <button
           type="button"
@@ -64,11 +64,11 @@ export function MobileNav({ email }: { email: string | null }) {
           <aside className="absolute inset-y-0 left-0 flex w-72 flex-col liquid-glass p-4 duration-300 animate-in slide-in-from-left" onClick={(e) => e.stopPropagation()}>
             <div className="mb-6 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-gold glow-gold">
-                  <TrendingUp className="h-5 w-5 text-slate-900" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-md gradient-gold">
+                  <span className="font-display text-sm font-extrabold text-[hsl(192_40%_8%)]">◆</span>
                 </div>
                 <div className="min-w-0">
-                  <h1 className="text-sm font-semibold leading-tight">Trading Journal</h1>
+                  <h1 className="font-display text-sm font-bold leading-tight tracking-tight">Instrument</h1>
                   <p className="truncate text-[11px] text-muted-foreground">{email}</p>
                 </div>
               </div>
