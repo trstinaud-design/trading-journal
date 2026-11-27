@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
-import { Target, Zap, DollarSign, Brain, TrendingDown, Wallet, Percent } from "lucide-react";
+import { Wallet } from "lucide-react";
 import { KPICard } from "@/components/dashboard/kpi-card";
 import { EquityCurve } from "@/components/dashboard/equity-curve";
 import { DoWChart } from "@/components/dashboard/dow-chart";
@@ -132,12 +132,12 @@ export function DashboardView({ trades, comptes, setups, niveaux }: Props) {
 
       {/* A. KPIs Globaux */}
       <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
-        <KPICard label="Win Rate" value={`${Math.round(k.winRate * 100)}%`} hint={`${k.wins}W / ${k.losses}L / ${k.breakEven}BE`} tone={k.winRate >= 0.5 ? "win" : "loss"} icon={Target} trend={k.winRate >= 0.5 ? "up" : "down"} />
-        <KPICard label="Profit Factor" value={pf} tone={k.profitFactor >= 1.5 ? "win" : k.profitFactor >= 1 ? "default" : "loss"} icon={Zap} trend={k.profitFactor >= 1 ? "up" : "down"} />
-        <KPICard label="P&L %" value={`${pnlPct >= 0 ? "+" : ""}${pnlPct.toFixed(2)}%`} hint={capitalInitial > 0 ? `sur ${capitalInitial.toLocaleString()}$` : "capital non défini"} tone={pnlPct >= 0 ? "win" : "loss"} icon={Percent} trend={pnlPct >= 0 ? "up" : "down"} />
-        <KPICard label="Total Net" value={`${k.totalR >= 0 ? "+" : ""}${k.totalR.toFixed(2)} R`} hint={`${k.totalUsd >= 0 ? "+" : ""}${k.totalUsd.toFixed(2)} $`} tone={k.totalR >= 0 ? "win" : "loss"} icon={DollarSign} trend={k.totalR >= 0 ? "up" : "down"} />
-        <KPICard label="Espérance" value={`${k.expectancyR >= 0 ? "+" : ""}${k.expectancyR.toFixed(2)} R`} hint={`Avg W ${k.avgWinR.toFixed(2)} / Avg L ${k.avgLossR.toFixed(2)}`} tone={k.expectancyR >= 0 ? "win" : "loss"} icon={Brain} trend={k.expectancyR >= 0 ? "up" : "down"} />
-        <KPICard label="Max Drawdown" value={`${k.maxDrawdownR.toFixed(2)} R`} tone="loss" icon={TrendingDown} />
+        <KPICard index={0} label="Win Rate" value={`${Math.round(k.winRate * 100)}%`} hint={`${k.wins}W / ${k.losses}L / ${k.breakEven}BE`} tone={k.winRate >= 0.5 ? "win" : "loss"} emblem="winrate" trend={k.winRate >= 0.5 ? "up" : "down"} />
+        <KPICard index={1} label="Profit Factor" value={pf} tone={k.profitFactor >= 1.5 ? "win" : k.profitFactor >= 1 ? "default" : "loss"} emblem="pf" trend={k.profitFactor >= 1 ? "up" : "down"} />
+        <KPICard index={2} label="P&L %" value={`${pnlPct >= 0 ? "+" : ""}${pnlPct.toFixed(2)}%`} hint={capitalInitial > 0 ? `sur ${capitalInitial.toLocaleString()}$` : "capital non défini"} tone={pnlPct >= 0 ? "win" : "loss"} emblem="pnl" trend={pnlPct >= 0 ? "up" : "down"} />
+        <KPICard index={3} label="Total Net" value={`${k.totalR >= 0 ? "+" : ""}${k.totalR.toFixed(2)} R`} hint={`${k.totalUsd >= 0 ? "+" : ""}${k.totalUsd.toFixed(2)} $`} tone={k.totalR >= 0 ? "win" : "loss"} emblem="net" trend={k.totalR >= 0 ? "up" : "down"} />
+        <KPICard index={4} label="Espérance" value={`${k.expectancyR >= 0 ? "+" : ""}${k.expectancyR.toFixed(2)} R`} hint={`Avg W ${k.avgWinR.toFixed(2)} / Avg L ${k.avgLossR.toFixed(2)}`} tone={k.expectancyR >= 0 ? "win" : "loss"} emblem="expectancy" trend={k.expectancyR >= 0 ? "up" : "down"} />
+        <KPICard index={5} label="Max Drawdown" value={`${k.maxDrawdownR.toFixed(2)} R`} tone="loss" emblem="drawdown" />
       </div>
 
       <StreaksCard streaks={streaks} />
