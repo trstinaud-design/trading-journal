@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { Toaster } from "sonner";
 import "./globals.css";
 
@@ -7,23 +8,26 @@ export const metadata: Metadata = {
   description: "Le registre de précision de ton trading : performance, discipline, patterns.",
 };
 
-// Applique thème + police + fond avant le premier rendu (évite le flash).
+// Thème clair/sombre : appliqué avant le 1er rendu via localStorage (évite le flash).
 const themeInitScript = `
   try {
     var el = document.documentElement;
     var stored = localStorage.getItem("theme");
     el.classList.toggle("dark", stored === "dark" || stored === null);
-    var f = localStorage.getItem("font"); if (f) el.dataset.font = f;
-    var b = localStorage.getItem("bg"); if (b) el.dataset.bg = b;
   } catch (_) {}
 `;
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  // Police & fond : lus depuis un cookie et posés sur <html> côté serveur
+  // (persistant et sans flash, indépendant du localStorage du navigateur).
+  const c = await cookies();
+  const font = c.get("pref_font")?.value || undefined;
+  const bg = c.get("pref_bg")?.value || undefined;
+
   return (
-    <html lang="fr" suppressHydrationWarning>
+    <html lang="fr" suppressHydrationWarning data-font={font} data-bg={bg}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
-        {/* Polices chargées au runtime (pas au build) — Archivo (UI) + Archivo Black (héros) */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

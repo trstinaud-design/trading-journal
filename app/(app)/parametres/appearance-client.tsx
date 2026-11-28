@@ -25,15 +25,25 @@ const BACKGROUNDS: { key: string; label: string; desc: string; preview: string }
   { key: "cosmos", label: "Cosmos", desc: "Nébuleuses + étoiles", preview: "radial-gradient(40% 50% at 20% 25%, rgba(124,58,237,.5), transparent 60%), radial-gradient(40% 50% at 80% 20%, rgba(14,165,233,.45), transparent 60%), radial-gradient(45% 55% at 60% 85%, rgba(236,72,153,.35), transparent 60%), #05060c" },
 ];
 
+// Préférence stockée dans un cookie (persistant, lu côté serveur — survit au vidage du localStorage)
+function setCookie(name: string, value: string | null) {
+  if (value === null) document.cookie = `${name}=;path=/;max-age=0;samesite=lax`;
+  else document.cookie = `${name}=${value};path=/;max-age=31536000;samesite=lax`;
+}
+function getCookie(name: string): string | null {
+  const m = document.cookie.match(new RegExp("(?:^|; )" + name + "=([^;]*)"));
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
 function applyFont(key: string) {
   const el = document.documentElement;
-  if (key === "archivo") delete el.dataset.font; else el.dataset.font = key;
-  try { key === "archivo" ? localStorage.removeItem("font") : localStorage.setItem("font", key); } catch {}
+  if (key === "archivo") { delete el.dataset.font; setCookie("pref_font", null); }
+  else { el.dataset.font = key; setCookie("pref_font", key); }
 }
 function applyBg(key: string) {
   const el = document.documentElement;
-  if (key === "petrole") delete el.dataset.bg; else el.dataset.bg = key;
-  try { key === "petrole" ? localStorage.removeItem("bg") : localStorage.setItem("bg", key); } catch {}
+  if (key === "petrole") { delete el.dataset.bg; setCookie("pref_bg", null); }
+  else { el.dataset.bg = key; setCookie("pref_bg", key); }
 }
 
 export function AppearanceClient() {
@@ -41,10 +51,8 @@ export function AppearanceClient() {
   const [bg, setBg] = useState("petrole");
 
   useEffect(() => {
-    try {
-      setFont(localStorage.getItem("font") ?? "archivo");
-      setBg(localStorage.getItem("bg") ?? "petrole");
-    } catch {}
+    setFont(getCookie("pref_font") ?? "archivo");
+    setBg(getCookie("pref_bg") ?? "petrole");
   }, []);
 
   return (
