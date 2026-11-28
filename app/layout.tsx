@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { Toaster } from "sonner";
+import { CosmosScene } from "@/components/layout/cosmos-scene";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -36,6 +37,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body className="min-h-screen bg-background font-sans antialiased">
+        <CosmosScene />
         {children}
         <Toaster richColors position="top-right" />
       </body>

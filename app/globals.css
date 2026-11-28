@@ -141,6 +141,86 @@
     @keyframes twinkle { 0%, 100% { opacity: 0.55; } 50% { opacity: 0.95; } }
   }
 
+  /* En cosmos, nébuleuse + étoiles passent derrière la scène animée */
+  html[data-bg="cosmos"] body::before,
+  html[data-bg="cosmos"] body::after { z-index: -2; }
+
+  /* ---- Scène cosmos (planète, étoile filante, avion, navette) ---- */
+  .cosmos-scene { display: none; }
+  html[data-bg="cosmos"] .cosmos-scene {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .cosmos-scene > * { position: absolute; }
+
+  .cx-planet {
+    right: -70px; bottom: -70px;
+    width: 230px; height: 230px;
+    border-radius: 50%;
+    background:
+      radial-gradient(circle at 32% 30%, rgba(255,255,255,0.22), transparent 42%),
+      radial-gradient(circle at 70% 72%, #3b2a6b 0%, #241a44 45%, #120d26 100%);
+    box-shadow: inset -14px -10px 40px rgba(0,0,0,0.6), 0 0 60px -10px rgba(124,58,237,0.5);
+    opacity: 0.9;
+  }
+  .cx-planet::after {
+    content: ""; position: absolute; inset: -22px 42px auto;
+    height: 20px; border-radius: 50%;
+    background: linear-gradient(90deg, transparent, rgba(255,210,140,0.35), transparent);
+    transform: rotate(-24deg);
+  }
+
+  .cx-shoot {
+    top: 0; left: 0;
+    width: 120px; height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, transparent, #cfe8ff, #ffffff);
+    box-shadow: 0 0 8px 1px rgba(207,232,255,0.8);
+    opacity: 0;
+  }
+  .cx-plane { top: 0; left: 0; color: rgba(226,238,255,0.8); opacity: 0; filter: drop-shadow(0 0 4px rgba(120,170,255,0.5)); }
+  .cx-shuttle { top: 0; left: 0; color: rgba(255,236,214,0.9); opacity: 0; filter: drop-shadow(0 0 5px rgba(255,150,90,0.55)); }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .cx-planet { animation: cx-spin 160s linear infinite; }
+    .cx-shoot  { animation: cx-shoot 60s linear infinite; will-change: transform, opacity; }
+    .cx-plane  { animation: cx-plane 40s linear infinite; will-change: transform, opacity; }
+    .cx-shuttle{ animation: cx-shuttle 90s linear infinite; will-change: transform, opacity; }
+  }
+
+  @keyframes cx-spin { to { transform: rotate(360deg); } }
+  @keyframes cx-shoot {
+    0%   { transform: translate(-12vw, -12vh) rotate(32deg); opacity: 0; }
+    2%   { opacity: 1; }
+    6%   { transform: translate(64vw, 56vh) rotate(32deg); opacity: 0; }
+    100% { transform: translate(64vw, 56vh) rotate(32deg); opacity: 0; }
+  }
+  @keyframes cx-plane {
+    0%   { transform: translate(-14vw, 16vh); opacity: 0; }
+    2%   { opacity: 0.55; }
+    18%  { opacity: 0.55; }
+    20%  { transform: translate(114vw, 11vh); opacity: 0; }
+    100% { transform: translate(114vw, 11vh); opacity: 0; }
+  }
+  @keyframes cx-shuttle {
+    0%   { transform: translate(-16vw, 86vh) rotate(-16deg); opacity: 0; }
+    2%   { opacity: 0.6; }
+    13%  { opacity: 0.6; }
+    15%  { transform: translate(116vw, 26vh) rotate(-16deg); opacity: 0; }
+    100% { transform: translate(116vw, 26vh) rotate(-16deg); opacity: 0; }
+  }
+
+  /* ---- Cartes/surfaces semi-transparentes en cosmos (partout) ---- */
+  html[data-bg="cosmos"] .card-glass {
+    background: hsl(var(--card) / 0.72);
+    backdrop-filter: blur(7px) saturate(120%);
+    -webkit-backdrop-filter: blur(7px) saturate(120%);
+  }
+
   /* Titres de page (h1) : suivent la police d'affichage choisie dans Apparence */
   h1 { font-family: var(--font-display); letter-spacing: normal; }
   h2, h3 { letter-spacing: -0.02em; }
